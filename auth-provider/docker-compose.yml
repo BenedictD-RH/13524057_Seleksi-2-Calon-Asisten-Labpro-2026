@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   auth-provider-server:
     build: ./server
@@ -14,13 +12,13 @@ services:
     restart: always
     environment:
       MYSQL_DATABASE: auth-provider-db
-      MYSQL_USER: auth-provider-db-dev
-      MYSQL_PASSWORD: ${AUTH_PROVIDER_DB_PASS}
+      MYSQL_ROOT_PASSWORD: ${AUTH_PROVIDER_DB_PASS}
     ports:
-      - "5342:5342" # Maps host port 3306 to container port 3306
+      - "5342:5342"
     volumes:
-      - mysql_dev_data:/var/lib/mysql
+      - ./primary-db:/docker-entrypoint-initdb.d
+      - auth-provider-db_data:/var/lib/mysql
 
 
 volumes:
-  mysql_dev_data:
+  auth-provider-db_data:
