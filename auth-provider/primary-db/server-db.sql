@@ -18,13 +18,15 @@ CREATE TABLE groups_(
 
 CREATE TABLE user_groups(
     id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID(), 1)),
-    user_id BINARY(16),
-    group_id BINARY(16),
+    user_id BINARY(16) UNIQUE,
+    group_id BINARY(16) UNIQUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT fk_user
         FOREIGN KEY (user_id)
-        REFERENCES users(id),
+        REFERENCES users(id)
+        ON DELETE CASCADE,
     CONSTRAINT fk_group
         FOREIGN KEY (group_id)
         REFERENCES groups_(id)
+        ON DELETE CASCADE,
 )

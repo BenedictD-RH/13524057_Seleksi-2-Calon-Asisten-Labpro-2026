@@ -24,36 +24,44 @@ func main() {
 
   r := gin.Default()
 
-  r.POST("/createuser", func(c *gin.Context) {
+  r.POST("user/create", func(c *gin.Context) {
     api.CreateUserRequest(c, db)
   })
 
-  r.GET("/getusers", func(c *gin.Context) {
+  r.GET("user/getall", func(c *gin.Context) {
     api.GetAllUsersRequest(c, db)
   })
 
-  r.PATCH("/updateuser", func(c *gin.Context) {
+  r.PATCH("user/update", func(c *gin.Context) {
     api.UpdateUserRequest(c, db)
   })
 
-  r.DELETE("/deleteuser", func(c *gin.Context) {
+  r.DELETE("user/delete", func(c *gin.Context) {
     api.DeleteUserRequest(c, db)
   })
 
-    r.POST("/creategroup", func(c *gin.Context) {
+    r.POST("group/create", func(c *gin.Context) {
     api.CreateGroupRequest(c, db)
   })
 
-  r.GET("/getgroups", func(c *gin.Context) {
+  r.GET("group/getall", func(c *gin.Context) {
     api.GetAllGroupsRequest(c, db)
   })
 
-  r.PATCH("/updategroup", func(c *gin.Context) {
+  r.PATCH("group/update", func(c *gin.Context) {
     api.UpdateGroupRequest(c, db)
   })
 
-  r.DELETE("/deletegroup", func(c *gin.Context) {
+  r.DELETE("group/delete", func(c *gin.Context) {
     api.DeleteGroupRequest(c, db)
+  })
+
+  r.POST("group/adduser", func(c *gin.Context) {
+    api.AddUserToGroup(c, db)
+  })
+
+  r.DELETE("group/removeuser", func(c *gin.Context) {
+    api.RemoveUserFromGroup(c, db)
   })
 
   r.Run()
