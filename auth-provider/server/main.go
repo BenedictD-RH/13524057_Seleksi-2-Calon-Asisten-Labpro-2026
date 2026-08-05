@@ -2,14 +2,17 @@ package main
 
 import (
 	"fmt"
+	"os"
 
-  "auth-provider-server/api"
+	"auth-provider-server/api"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
-var dsn = "root:password@tcp(localhost:5342)/auth-provider-db?charset=utf8mb4&parseTime=True&loc=Local"
+var db_pass = os.Getenv("AUTH_PROVIDER_DB_PASS")
+var dsn = fmt.Sprintf("root:%s@tcp(localhost:5342)/auth-provider-db?charset=utf8mb4&parseTime=True&loc=Local", db_pass)
 var db, db_err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 func main() {
