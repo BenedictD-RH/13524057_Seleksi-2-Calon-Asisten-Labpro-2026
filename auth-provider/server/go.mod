@@ -3,7 +3,9 @@ module auth-provider-server
 go 1.25.0
 
 require (
+	github.com/gin-contrib/requestid v1.0.6
 	github.com/gin-gonic/gin v1.12.0
+	github.com/joho/godotenv v1.5.1
 	golang.org/x/crypto v0.48.0
 	gorm.io/datatypes v1.2.7
 	gorm.io/driver/mysql v1.6.0

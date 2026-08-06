@@ -1,11 +1,13 @@
-package api
+package controlpanel
 
 import (
+	"fmt"
 	"net/http"
-	"time"
+
+	"auth-provider-server/api/models"
+	"auth-provider-server/api/utility"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
@@ -28,29 +30,9 @@ type PKeyPayload struct {
 	Id datatypes.BinUUID `json:"id" binding:"required"`
 }
 
-type User struct {
-	Id           datatypes.BinUUID `json:"id" gorm:"default:UUID_TO_BIN(UUID())"`
-	Name         string            `json:"name"`
-	Email        string            `json:"email"`
-	PasswordHash string            `json:"password_hash"`
-	Status       string            `json:"status"`
-	CreatedAt    time.Time         `json:"created_at"`
-	UpdatedAt    time.Time         `json:"updated_at"`
-}
-
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	return string(bytes), err
-}
-
-func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
-
-func (payload CreateUserPayload) GetDBStruct() (User, error) {
-	hashedPass, err := HashPassword(payload.Password)
-	return User{
+func (payload CreateUserPayload) GetDBStruct() (models.User, error) {
+	hashedPass, err := utility.HashString(payload.Password)
+	return models.User{
 		Name:         payload.Name,
 		Email:        payload.Email,
 		PasswordHash: hashedPass,
@@ -58,12 +40,17 @@ func (payload CreateUserPayload) GetDBStruct() (User, error) {
 	}, err
 }
 
-func (payload UpdateUserPayload) GetDBStruct() (User, User, error) {
-	hashedPass, err := HashPassword(payload.Password)
-	return User{
+func (payload UpdateUserPayload) GetDBStruct() (models.User, models.User, error) {
+	var hashedPass string = ""
+	var err error = nil
+	if (payload.Password != "") {
+		hashedPass, err = utility.HashString(payload.Password)
+	}
+	
+	return models.User{
 			Id: payload.Id,
 		},
-		User{
+		models.User{
 			Name:         payload.Name,
 			Email:        payload.Email,
 			PasswordHash: hashedPass,
@@ -71,8 +58,8 @@ func (payload UpdateUserPayload) GetDBStruct() (User, User, error) {
 		}, err
 }
 
-func (payload PKeyPayload) GetUserModel() User {
-	return User{Id: payload.Id}
+func (payload PKeyPayload) GetUserModel() models.User {
+	return models.User{Id: payload.Id}
 }
 
 func CreateUserRequest(c *gin.Context, db *gorm.DB) {
@@ -85,7 +72,6 @@ func CreateUserRequest(c *gin.Context, db *gorm.DB) {
 		})
 		return
 	}
-
 	userModel, err := userPayload.GetDBStruct()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -102,7 +88,9 @@ func CreateUserRequest(c *gin.Context, db *gorm.DB) {
 		})
 		return
 	}
-
+	if utility.CheckHash(userPayload.Password, userModel.PasswordHash) {
+		fmt.Println("Jello")
+	}
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "User successfully created",
@@ -110,7 +98,7 @@ func CreateUserRequest(c *gin.Context, db *gorm.DB) {
 }
 
 func GetAllUsersRequest(c *gin.Context, db *gorm.DB) {
-	var users []User
+	var users []models.User
 
 	if err := db.Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

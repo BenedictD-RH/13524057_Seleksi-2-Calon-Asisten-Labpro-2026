@@ -1,8 +1,8 @@
-package api
+package controlpanel
 
 import (
 	"net/http"
-	"time"
+	"auth-provider-server/api/models"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/datatypes"
@@ -20,37 +20,25 @@ type UpdateGroupPayload struct {
 	Description string            `json:"description"`
 }
 
-type Group struct {
-	Id          datatypes.BinUUID `json:"id" gorm:"default:UUID_TO_BIN(UUID())"`
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	CreatedAt   time.Time         `json:"created_at"`
-	UpdatedAt   time.Time         `json:"updated_at"`
-}
-
-func (Group) TableName() string {
-	return "groups_"
-}
-
-func (payload CreateGroupPayload) GetDBStruct() Group {
-	return Group{
+func (payload CreateGroupPayload) GetDBStruct() models.Group {
+	return models.Group{
 		Name:        payload.Name,
 		Description: payload.Description,
 	}
 }
 
-func (payload UpdateGroupPayload) GetDBStruct() (Group, Group) {
-	return Group{
+func (payload UpdateGroupPayload) GetDBStruct() (models.Group, models.Group) {
+	return models.Group{
 		Id: payload.Id,
 	},
-	Group{
+	models.Group{
 		Name:        payload.Name,
 		Description: payload.Description,
 	}
 }
 
-func (payload PKeyPayload) GetGroupModel() Group {
-	return Group{Id: payload.Id}
+func (payload PKeyPayload) GetGroupModel() models.Group {
+	return models.Group{Id: payload.Id}
 }
 
 func CreateGroupRequest(c *gin.Context, db *gorm.DB) {
@@ -81,7 +69,7 @@ func CreateGroupRequest(c *gin.Context, db *gorm.DB) {
 }
 
 func GetAllGroupsRequest(c *gin.Context, db *gorm.DB) {
-	var groups []Group
+	var groups []models.Group
 
 	if err := db.Find(&groups).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

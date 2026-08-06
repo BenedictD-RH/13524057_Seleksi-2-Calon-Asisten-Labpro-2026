@@ -1,9 +1,8 @@
-package api
+package controlpanel
 
 import (
 	"net/http"
-	"time"
-
+	"auth-provider-server/api/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -14,15 +13,10 @@ type UserGroupPayload struct {
 	GroupId datatypes.BinUUID	`json:"group_id" binding:"required"`
 }
 
-type UserGroup struct {
-	Id datatypes.BinUUID 		`json:"id" gorm:"default:UUID_TO_BIN(UUID())"`
-	UserId datatypes.BinUUID	`json:"user_id"`
-	GroupId datatypes.BinUUID	`json:"group_id"`
-	CreatedAt time.Time         `json:"created_at"`
-}
 
-func (payload UserGroupPayload) GetDBStruct() (UserGroup) {
-	return UserGroup{
+
+func (payload UserGroupPayload) GetDBStruct() (models.UserGroup) {
+	return models.UserGroup{
 		UserId: payload.UserId,
 		GroupId: payload.GroupId,
 	}
