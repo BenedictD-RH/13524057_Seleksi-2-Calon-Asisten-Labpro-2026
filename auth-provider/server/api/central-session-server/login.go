@@ -38,14 +38,14 @@ func InternalServerResponse(c *gin.Context) {
 	})
 }
 
-func GenerateSession(user models.User) (models.SSOSession, error) {
+func GenerateSession(user models.User) (models.SSOSession, string, error) {
 	session_token, err := utility.CryptoRandString(16);
 	if (err != nil) {
-		return models.SSOSession{}, err
+		return models.SSOSession{}, "", err
 	}
 	token_hash, err := utility.HashString(session_token)
 	if (err != nil) {
-		return models.SSOSession{}, err
+		return models.SSOSession{}, "", err
 	}
 	return models.SSOSession{
 		UserId: user.Id,
@@ -53,7 +53,7 @@ func GenerateSession(user models.User) (models.SSOSession, error) {
 		Status: "Active",
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(session_exp_duration),
-	}, nil
+	}, session_token, nil
 }
 
 func LoginRequest(c *gin.Context, db *gorm.DB) {
@@ -80,7 +80,7 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 		UnauthorizedResponse(c)
 		return
 	}
-	session, err := GenerateSession(users[0])
+	session, session_token, err := GenerateSession(users[0])
 	if (err != nil) {
 		InternalServerResponse(c)
 		return;
@@ -91,9 +91,7 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 		return;
 	}
 
-	c.SetCookie("ssid", session.Id.String(), int(session_exp_duration.Seconds()), "/", "localhost", false, true)
-	c.JSON(http.StatusOK, gin.H{
-		"status":  "success",
-		"message": "Login Successful",
-	})
+	c.SetCookie("ssid", session_token, int(session_exp_duration.Seconds()), "/", "localhost", false, true)
+
+	AuthResponse(c, db, &session)
 }

@@ -93,6 +93,7 @@ CREATE TABLE sso_sessions(
 CREATE TABLE authorization_codes(
     id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID(), 1)),
     code_hash VARCHAR(60) NOT NULL,
+    code_challenge VARCHAR(60) NOT NULL,
     user_id BINARY(16) NOT NULL,
     application_id BINARY(16) NOT NULL,
     sso_session_id BINARY(16) NOT NULL,
