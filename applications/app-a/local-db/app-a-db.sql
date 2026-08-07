@@ -3,7 +3,7 @@ CREATE TABLE local_sessions(
     session_token_hash VARCHAR(60) NOT NULL,
     external_user_id BINARY(16) NOT NULL,
     central_session_id BINARY(16) NOT NULL,
-    application_Id BINARY(16),
+    application_id BINARY(16),
     status ENUM('Active', 'Expired', 'Revoked') NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     expires_at DATETIME NOT NULL,
