@@ -38,5 +38,13 @@ func main() {
     auth.LoginRequest(c, db)
   })
 
-  r.Run()
+  r.GET("/auth/callback", func(c *gin.Context) {
+
+  })
+
+  r.POST("/auth/register", func(c *gin.Context) {
+    auth.RegisterAppToAuthProviderRequest(c, db)
+  })
+
+  r.Run(":8691")
 }

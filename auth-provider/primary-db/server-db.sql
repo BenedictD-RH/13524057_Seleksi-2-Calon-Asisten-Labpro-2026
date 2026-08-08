@@ -1,5 +1,5 @@
 CREATE TABLE users(
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID(), 1)),
+    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
     name VARCHAR(20) NOT NULL,
     email VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(60) NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE users(
 );
 
 CREATE TABLE groups_(
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID(), 1)),
+    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
     name VARCHAR(20) NOT NULL,
     description TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE groups_(
 );
 
 CREATE TABLE user_groups(
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID(), 1)),
+    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
     user_id BINARY(16) UNIQUE,
     group_id BINARY(16) UNIQUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE user_groups(
 );
 
 CREATE TABLE applications(
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID(), 1)),
+    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
     name VARCHAR(20) NOT NULL,
     client_id VARCHAR(20) NOT NULL UNIQUE,
     client_secret_hash VARCHAR(60),
@@ -44,7 +44,7 @@ CREATE TABLE applications(
 );
 
 CREATE TABLE application_redirect_uris(
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID(), 1)),
+    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
     application_id BINARY(16) NOT NULL,
     redirect_uri TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE application_redirect_uris(
 );
 
 CREATE TABLE application_group_policies(
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID(), 1)),
+    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
     application_id BINARY(16) NOT NULL,
     group_id BINARY(16) NOT NULL,
     effect ENUM('Allow', 'Blocked') NOT NULL,
@@ -73,7 +73,7 @@ CREATE TABLE application_group_policies(
 
 
 CREATE TABLE sso_sessions(
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID(), 1)),
+    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
     user_id BINARY(16) NOT NULL,
     session_token_hash VARCHAR(60) NOT NULL,
     status ENUM('Active', 'Expired', 'Revoked') NOT NULL,
@@ -91,7 +91,7 @@ CREATE TABLE sso_sessions(
 );
 
 CREATE TABLE authorization_codes(
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID(), 1)),
+    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
     code_hash VARCHAR(60) NOT NULL,
     code_challenge VARCHAR(60) NOT NULL,
     user_id BINARY(16) NOT NULL,
@@ -116,7 +116,7 @@ CREATE TABLE authorization_codes(
 );
 
 CREATE TABLE access_tokens(
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID(), 1)),
+    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
     token_hash VARCHAR(60) NOT NULL,
     user_id BINARY(16) NOT NULL,
     application_id BINARY(16) NOT NULL,
@@ -141,7 +141,7 @@ CREATE TABLE access_tokens(
 );
 
 CREATE TABLE audit_logs(
-    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID(), 1)),
+    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
     event_type VARCHAR(50) NOT NULL,
     actor_id BINARY(16),
     user_id BINARY(16),

@@ -80,5 +80,13 @@ func main() {
     centralsessionserver.LoginRequest(c, db)
   })
 
+  r.GET("/authorize", func(c *gin.Context){
+    centralsessionserver.AuthorizeRequest(c,db)
+  })
+
+  r.POST("/apps", func(c *gin.Context){
+    controlpanel.RegisterApplicationRequest(c, db)
+  })
+
   r.Run()
 }

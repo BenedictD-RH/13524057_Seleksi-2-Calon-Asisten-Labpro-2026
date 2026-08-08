@@ -2,6 +2,7 @@ package controlpanel
 
 import (
 	"net/http"
+	"github.com/google/uuid"
 	"auth-provider-server/api/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/datatypes"
@@ -15,7 +16,19 @@ type UserGroupPayload struct {
 
 
 
-func (payload UserGroupPayload) GetDBStruct() (models.UserGroup) {
+func (payload UserGroupPayload) GetDBStructCreate() (models.UserGroup, error) {
+	newUUID, err := uuid.NewRandom()
+    if err != nil {
+        return models.UserGroup{}, err
+    }
+	return models.UserGroup{
+		ID:	datatypes.BinUUID(newUUID),
+		UserId: payload.UserId,
+		GroupId: payload.GroupId,
+	}, nil
+}
+
+func (payload UserGroupPayload) GetDBStructDelete() (models.UserGroup) {
 	return models.UserGroup{
 		UserId: payload.UserId,
 		GroupId: payload.GroupId,
@@ -33,7 +46,14 @@ func AddUserToGroup(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	userGroupModel := userGroupPayload.GetDBStruct()
+	userGroupModel, err := userGroupPayload.GetDBStructCreate()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Failed to add user to group: " + err.Error(),
+		})
+		return
+	}
 
 	if err := db.Create(&userGroupModel).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -60,7 +80,7 @@ func RemoveUserFromGroup(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	userGroupModel := userGroupPayload.GetDBStruct()
+	userGroupModel := userGroupPayload.GetDBStructDelete()
 
 	if err := db.Delete(&userGroupModel).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

@@ -1,2 +1,3 @@
 include:
   - ./auth-provider/docker-compose.yml
+  - ./applications/app-a/docker-compose.yml

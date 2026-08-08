@@ -1,8 +1,8 @@
 package controlpanel
 
 import (
-	"fmt"
 	"net/http"
+	"github.com/google/uuid"
 
 	"auth-provider-server/api/models"
 	"auth-provider-server/api/utility"
@@ -31,24 +31,29 @@ type PKeyPayload struct {
 }
 
 func (payload CreateUserPayload) GetDBStruct() (models.User, error) {
+	newUUID, err := uuid.NewRandom()
+    if err != nil {
+        return models.User{}, err
+    }
 	hashedPass, err := utility.HashString(payload.Password)
 	return models.User{
+		ID: 		  datatypes.BinUUID(newUUID),
 		Name:         payload.Name,
 		Email:        payload.Email,
 		PasswordHash: hashedPass,
-		Status:       "Inactive",
+		Status:       "Active",
 	}, err
 }
 
 func (payload UpdateUserPayload) GetDBStruct() (models.User, models.User, error) {
 	var hashedPass string = ""
 	var err error = nil
-	if (payload.Password != "") {
+	if payload.Password != "" {
 		hashedPass, err = utility.HashString(payload.Password)
 	}
-	
+
 	return models.User{
-			Id: payload.Id,
+			ID: payload.Id,
 		},
 		models.User{
 			Name:         payload.Name,
@@ -59,7 +64,7 @@ func (payload UpdateUserPayload) GetDBStruct() (models.User, models.User, error)
 }
 
 func (payload PKeyPayload) GetUserModel() models.User {
-	return models.User{Id: payload.Id}
+	return models.User{ID: payload.Id}
 }
 
 func CreateUserRequest(c *gin.Context, db *gorm.DB) {
@@ -88,9 +93,7 @@ func CreateUserRequest(c *gin.Context, db *gorm.DB) {
 		})
 		return
 	}
-	if utility.CheckHash(userPayload.Password, userModel.PasswordHash) {
-		fmt.Println("Jello")
-	}
+
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "User successfully created",

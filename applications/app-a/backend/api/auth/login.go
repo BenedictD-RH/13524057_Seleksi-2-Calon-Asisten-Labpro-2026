@@ -1,35 +1,72 @@
 package auth
 
 import (
+	"app-a-backend/api/models"
 	"app-a-backend/api/utility"
 	"fmt"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
+var code_verifier_exp_duration = 2 * time.Minute
+
+func CreateCodeVerifier() (models.CodeVerifier, error) {
+	newUUID, err := uuid.NewRandom()
+	if err != nil {
+		return models.CodeVerifier{}, err
+	}
+	state, err := utility.CryptoRandString(32)
+	if err != nil {
+		return models.CodeVerifier{}, err
+	}
+	code_verifier, err := utility.CryptoRandString(64)
+	if err != nil {
+		return models.CodeVerifier{}, err
+	}
+	return models.CodeVerifier{
+		ID:           datatypes.BinUUID(newUUID),
+		State:        state,
+		CodeVerifier: code_verifier,
+		Status:       "Active",
+		CreatedAt:    time.Now(),
+		ExpiresAt:    time.Now().Add(code_verifier_exp_duration),
+	}, nil
+}
 
 func LoginRequest(c *gin.Context, db *gorm.DB) {
 	auth_server_url := os.Getenv("AUTH_SERVER_URL")
 	redirect_uri := os.Getenv("REDIRECT_URI")
 	client_id := os.Getenv("CLIENT_ID")
-	state, err := utility.CryptoRandString(32)
-	if (err != nil) {
+
+	if auth_server_url == "" || redirect_uri == "" || client_id == "" {
+		fmt.Println("Missing environment variables")
 		//InternalServerError
 		return
 	}
-	code_verifier, err := utility.CryptoRandString(64)
-	if (err != nil) {
+
+	codeVerifierModel, err := CreateCodeVerifier()
+	if err != nil {
 		//InternalServerError
 		return
 	}
-	code_challenge, err := utility.HashString(code_verifier)
-	if (err != nil) {
+
+	if err := db.Create(&codeVerifierModel).Error; err != nil {
 		//InternalServerError
 		return
 	}
-	c.Redirect(http.StatusFound, fmt.Sprintf("%s/authorize?redirect_uri=%s&client_id=%s&state=%s&code_challenge=%s", 
-			   auth_server_url, redirect_uri, client_id, state, code_challenge))
+
+	code_challenge, err := utility.HashString(codeVerifierModel.CodeVerifier)
+	if err != nil {
+		//InternalServerError
+		return
+	}
+	c.Redirect(http.StatusFound, fmt.Sprintf("%s/authorize?redirect_uri=%s&client_id=%s&state=%s&code_challenge=%s",
+		auth_server_url, redirect_uri, client_id, codeVerifierModel.State, code_challenge))
 }

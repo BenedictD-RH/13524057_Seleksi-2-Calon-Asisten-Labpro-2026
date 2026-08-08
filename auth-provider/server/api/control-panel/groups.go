@@ -1,8 +1,9 @@
 package controlpanel
 
 import (
-	"net/http"
 	"auth-provider-server/api/models"
+	"net/http"
+	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/datatypes"
@@ -20,25 +21,30 @@ type UpdateGroupPayload struct {
 	Description string            `json:"description"`
 }
 
-func (payload CreateGroupPayload) GetDBStruct() models.Group {
+func (payload CreateGroupPayload) GetDBStruct() (models.Group, error) {
+	newUUID, err := uuid.NewRandom()
+    if err != nil {
+        return models.Group{}, err
+    }
 	return models.Group{
+		ID:			 datatypes.BinUUID(newUUID),
 		Name:        payload.Name,
 		Description: payload.Description,
-	}
+	}, nil
 }
 
 func (payload UpdateGroupPayload) GetDBStruct() (models.Group, models.Group) {
 	return models.Group{
-		Id: payload.Id,
-	},
-	models.Group{
-		Name:        payload.Name,
-		Description: payload.Description,
-	}
+			ID: payload.Id,
+		},
+		models.Group{
+			Name:        payload.Name,
+			Description: payload.Description,
+		}
 }
 
 func (payload PKeyPayload) GetGroupModel() models.Group {
-	return models.Group{Id: payload.Id}
+	return models.Group{ID: payload.Id}
 }
 
 func CreateGroupRequest(c *gin.Context, db *gorm.DB) {
@@ -52,7 +58,14 @@ func CreateGroupRequest(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	groupModel := groupPayload.GetDBStruct()
+	groupModel, err := groupPayload.GetDBStruct()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Failed to create group: " + err.Error(),
+		})
+		return
+	}
 
 	if err := db.Create(&groupModel).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
