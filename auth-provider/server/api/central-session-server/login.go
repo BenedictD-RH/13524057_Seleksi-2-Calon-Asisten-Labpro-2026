@@ -3,7 +3,6 @@ package centralsessionserver
 import (
 	"auth-provider-server/api/models"
 	"auth-provider-server/api/utility"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -99,7 +98,6 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 		InternalServerResponse(c)
 		return
 	}
-	fmt.Println(session.ID)
 	c.SetCookie("ssid", session_token, int(session_exp_duration.Seconds()), "/", "localhost", false, true)
 
 	AuthResponse(c, db, &session)

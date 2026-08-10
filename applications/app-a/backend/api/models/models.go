@@ -28,3 +28,17 @@ type CodeVerifier struct {
 	CreatedAt    time.Time
 	ExpiresAt    time.Time
 }
+
+type ProfileCache struct {
+	ExternalUserId   datatypes.BinUUID
+	Name string
+	Email string
+	GroupsList datatypes.JSON
+	SyncedAt time.Time
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+func (ProfileCache) TableName() string {
+	return "profile_cache"
+}

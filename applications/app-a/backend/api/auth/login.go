@@ -26,7 +26,7 @@ func CreateCodeVerifier() (models.CodeVerifier, error) {
 	if err != nil {
 		return models.CodeVerifier{}, err
 	}
-	code_verifier, err := utility.CryptoRandString(64)
+	code_verifier, err := utility.CryptoRandString(60)
 	if err != nil {
 		return models.CodeVerifier{}, err
 	}
@@ -47,24 +47,25 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 
 	if auth_server_url == "" || redirect_uri == "" || client_id == "" {
 		fmt.Println("Missing environment variables")
-		//InternalServerError
+		InternalServerErrorResponse(c)
 		return
 	}
 
 	codeVerifierModel, err := CreateCodeVerifier()
 	if err != nil {
-		//InternalServerError
+		InternalServerErrorResponse(c)
 		return
 	}
 
 	if err := db.Create(&codeVerifierModel).Error; err != nil {
-		//InternalServerError
+		InternalServerErrorResponse(c)
 		return
 	}
 
 	code_challenge, err := utility.HashString(codeVerifierModel.CodeVerifier)
+	fmt.Println(code_challenge)
 	if err != nil {
-		//InternalServerError
+		InternalServerErrorResponse(c)
 		return
 	}
 	c.Redirect(http.StatusFound, fmt.Sprintf("%s/authorize?redirect_uri=%s&client_id=%s&state=%s&code_challenge=%s",

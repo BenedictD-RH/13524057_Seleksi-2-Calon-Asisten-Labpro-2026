@@ -38,7 +38,6 @@ func GenerateAuthCode(code_challenge, client_id, redirect_uri string, session mo
 		InternalServerResponse(c)
 		return nil, ""
 	}
-	fmt.Println(session.ID)
 
 	return &models.AuthorizationCode{
 		ID:			   datatypes.BinUUID(newUUID),

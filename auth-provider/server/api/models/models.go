@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -39,6 +40,16 @@ type UserGroup struct {
 	CreatedAt time.Time         `json:"created_at"`
 }
 
+func (u User) GetGroupsUUID(db *gorm.DB) (*[]datatypes.BinUUID) {
+	var groups []UserGroup
+	db.Where("user_id = ?", u.ID).Find(&groups)
+	groupsUUID := make([]datatypes.BinUUID, len(groups))
+	for i:= 0; i < len(groups); i++ {
+		groupsUUID[i] = groups[i].GroupId
+	}
+	return &groupsUUID
+}
+
 type Application struct {
 	ID                    datatypes.BinUUID `json:"id" gorm:"default:UUID_TO_BIN(UUID())"`
 	Name                  string            `json:"name"`
@@ -62,6 +73,19 @@ type AuthorizationCode struct {
 	CreatedAt     time.Time
 	ExpiresAt     time.Time
 	UsedAt        *time.Time
+}
+
+type AccessToken struct {
+	ID            datatypes.BinUUID `gorm:"default:UUID_TO_BIN(UUID())"`
+	TokenHash     string
+	UserId        datatypes.BinUUID
+	ApplicationId datatypes.BinUUID
+	SsoSessionId  datatypes.BinUUID
+	Scopes        string
+	Status        string
+	CreatedAt     time.Time
+	ExpiresAt     time.Time
+	RevokedAt     *time.Time
 }
 
 type SSOSession struct {

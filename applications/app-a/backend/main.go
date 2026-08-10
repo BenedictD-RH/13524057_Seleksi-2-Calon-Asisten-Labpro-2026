@@ -39,7 +39,7 @@ func main() {
   })
 
   r.GET("/auth/callback", func(c *gin.Context) {
-
+    auth.AuthCallbackRequest(c, db)
   })
 
   r.POST("/auth/register", func(c *gin.Context) {
