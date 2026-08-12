@@ -1,0 +1,23 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.headertitle {
+  font-size: 8vh;
+  font-family: 'Momo Trust Display';
+}
+
+.pagebody {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+}

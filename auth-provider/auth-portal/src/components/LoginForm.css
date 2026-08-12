@@ -1,0 +1,52 @@
+.container {
+    background-color: #939393;
+    height: 60%;
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5%;
+    
+}
+
+.loginheader {
+    font-size: 5.5vh;
+    color: white;
+    font-family: 'Momo Trust Display';
+    margin: 2%;
+}
+
+.inputcontainer {
+    display: flex;
+    flex-direction: column;
+    width: 75%;
+    gap: 5%;
+}
+
+.inputheader {
+    font-size: 2.5vh;
+    color: white;
+    font-family: 'Momo Trust Display';
+}
+
+.logininput {
+    width: 100%;
+    height: 5vh;
+    font-size: 3vh;
+    font-family: 'Momo Trust Display';
+}
+
+.btncontainer {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    margin-bottom: 5%;
+    text-decoration: none;
+}
+
+.loginbutton {
+    width: 15vw;
+    height: 5vh;
+    font-size: 2.5vh;
+    font-family: 'Momo Trust Display';
+}
