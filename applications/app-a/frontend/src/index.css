@@ -1,0 +1,49 @@
+:root {
+  background-color: lightsteelblue;
+  display: block;
+}
+
+body {
+  margin: 0;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.pageheader {
+  background-color: steelblue;
+  padding: 0.5vw;
+}
+
+.appname {
+  font-size: 3vw;
+  color:white;
+  font-family: Dosis;
+  margin: 0 0 0 1vw;
+}
+
+.pagebody {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+
+}
+
+.loginbutton {
+  font-size: 2vw;
+  font-weight: bold;
+  font-family: Dosis;
+  width: 20%;
+  height: 10%;
+}
+
+.contenttext {
+  font-size: 2vw;
+  font-weight: bold;
+  color: white;
+  font-family: Dosis;
+}
