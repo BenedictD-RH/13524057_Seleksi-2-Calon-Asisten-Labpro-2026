@@ -62,8 +62,7 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	code_challenge, err := utility.HashString(codeVerifierModel.CodeVerifier)
-	fmt.Println(code_challenge)
+	code_challenge, err := utility.HashPassword(codeVerifierModel.CodeVerifier)
 	if err != nil {
 		InternalServerErrorResponse(c)
 		return

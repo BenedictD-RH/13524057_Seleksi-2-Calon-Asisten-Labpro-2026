@@ -18,18 +18,18 @@ import (
 	"gorm.io/gorm"
 )
 
-var local_session_expr = 2*time.Minute
+var local_session_expr = 2 * time.Minute
 
 type AccessTokenPayload struct {
-	Token string	`json:"access_token" binding:"required"`
+	Token string `json:"access_token" binding:"required"`
 }
 
 type UserInfoPayload struct {
-	CentralSessionID datatypes.BinUUID	`json:"central_session_id" binding:"required"`
-	UserID datatypes.BinUUID	`json:"user_id" binding:"required"`
-	Name string	`json:"name" binding:"required"`
-	Email string	`json:"email" binding:"required"`
-	Groups []datatypes.BinUUID `json:"groups" binding:"required"`
+	CentralSessionID datatypes.BinUUID   `json:"central_session_id" binding:"required"`
+	UserID           datatypes.BinUUID   `json:"user_id" binding:"required"`
+	Name             string              `json:"name" binding:"required"`
+	Email            string              `json:"email" binding:"required"`
+	Groups           []datatypes.BinUUID `json:"groups" binding:"required"`
 }
 
 func CreateLocalSession(user_info UserInfoPayload) (*models.LocalSession, string) {
@@ -41,47 +41,47 @@ func CreateLocalSession(user_info UserInfoPayload) (*models.LocalSession, string
 	if err != nil {
 		return nil, ""
 	}
-	session_token_hash, err := utility.HashString(session_token)
+	session_token_hash, err := utility.HashPassword(session_token)
 	if err != nil {
 		return nil, ""
 	}
 
 	return &models.LocalSession{
-		ID: datatypes.BinUUID(newUUID),
+		ID:               datatypes.BinUUID(newUUID),
 		SessionTokenHash: session_token_hash,
-		ExternalUserId: user_info.UserID,
+		ExternalUserId:   user_info.UserID,
 		CentralSessionId: user_info.CentralSessionID,
-		Status: "Active",
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(local_session_expr),
+		Status:           "Active",
+		CreatedAt:        time.Now(),
+		ExpiresAt:        time.Now().Add(local_session_expr),
 	}, session_token
 }
 
-func CreateNewProfileCache(user_info UserInfoPayload) (*models.ProfileCache) {
+func CreateNewProfileCache(user_info UserInfoPayload) *models.ProfileCache {
 	jsonData, err := json.Marshal(user_info.Groups)
-	if (err != nil) {
+	if err != nil {
 		return nil
 	}
 	return &models.ProfileCache{
 		ExternalUserId: user_info.UserID,
-		Name: user_info.Name,
-		Email: user_info.Email,
-		GroupsList: jsonData,
-		SyncedAt: time.Now(),
-		CreatedAt: time.Now(),
+		Name:           user_info.Name,
+		Email:          user_info.Email,
+		GroupsList:     jsonData,
+		SyncedAt:       time.Now(),
+		CreatedAt:      time.Now(),
 	}
 }
 
-func CreateUpdatedProfileCache(user_info UserInfoPayload) (*models.ProfileCache) {
+func CreateUpdatedProfileCache(user_info UserInfoPayload) *models.ProfileCache {
 	jsonData, err := json.Marshal(user_info.Groups)
-	if (err != nil) {
+	if err != nil {
 		return nil
 	}
 	return &models.ProfileCache{
-		Name: user_info.Name,
-		Email: user_info.Email,
+		Name:       user_info.Name,
+		Email:      user_info.Email,
 		GroupsList: jsonData,
-		SyncedAt: time.Now(),
+		SyncedAt:   time.Now(),
 	}
 }
 
@@ -143,17 +143,15 @@ func AuthCallbackRequest(c *gin.Context, db *gorm.DB) {
 		InternalServerErrorResponse(c)
 		return
 	}
-	
+
 	var tokenPayload AccessTokenPayload
 
-	
 	if err = json.NewDecoder(resp.Body).Decode(&tokenPayload); err != nil {
 		InternalServerErrorResponse(c)
 		return
 	}
 	resp.Body.Close()
 
-	
 	payload = map[string]string{"access_token": tokenPayload.Token}
 	jsonData, _ = json.Marshal(payload)
 	req, _ = http.NewRequest("GET", fmt.Sprintf("%s/userinfo", auth_server_url), bytes.NewReader(jsonData))
@@ -178,13 +176,12 @@ func AuthCallbackRequest(c *gin.Context, db *gorm.DB) {
 	var profiles []models.ProfileCache
 	db.Where("external_user_id = ?", user_info.UserID).Find(&profiles)
 	if len(profiles) > 0 {
-		profile_cache = profiles[0]
 		updated_profile := CreateUpdatedProfileCache(user_info)
 		if updated_profile == nil {
 			InternalServerErrorResponse(c)
 			return
 		}
-		db.Model(&profile_cache).Updates(updated_profile)
+		db.Model(&models.ProfileCache{}).Where("external_user_id = ?", user_info.UserID).Updates(updated_profile)
 	} else {
 		if profile_pointer := CreateNewProfileCache(user_info); profile_pointer != nil {
 			profile_cache = *profile_pointer
@@ -192,7 +189,7 @@ func AuthCallbackRequest(c *gin.Context, db *gorm.DB) {
 			InternalServerErrorResponse(c)
 			return
 		}
-		
+
 		if err = db.Create(&profile_cache).Error; err != nil {
 			InternalServerErrorResponse(c)
 			return
@@ -209,9 +206,7 @@ func AuthCallbackRequest(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	c.SetCookie(fmt.Sprintf("%s_ssid", client_id), session_token, int(local_session_expr.Seconds()), "/", "localhost", false, true)
+	c.SetCookie("local_ssid", session_token, int(local_session_expr.Seconds()), "/", "", false, true)
+	c.Redirect(http.StatusFound, os.Getenv("FRONTEND_URI"))
 
-	c.JSON(http.StatusOK, gin.H{
-		"name": user_info.Name,
-	})
 }

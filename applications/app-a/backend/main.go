@@ -1,14 +1,16 @@
 package main
 
 import (
+	"app-a-backend/api/app"
+	"app-a-backend/api/auth"
 	"fmt"
 	"os"
-  "app-a-backend/api/auth"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-  "github.com/joho/godotenv"
 )
 
 
@@ -33,6 +35,7 @@ func main() {
   } 
 
   r := gin.Default()
+  r.Use(cors.Default())
 
   r.GET("/login", func(c *gin.Context) {
     auth.LoginRequest(c, db)
@@ -44,6 +47,10 @@ func main() {
 
   r.POST("/auth/register", func(c *gin.Context) {
     auth.RegisterAppToAuthProviderRequest(c, db)
+  })
+
+  r.GET("/users", func(c *gin.Context) {
+    app.GetUserDataRequest(c, db)
   })
 
   r.Run(":8691")
