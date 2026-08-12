@@ -3,6 +3,7 @@ package centralsessionserver
 import (
 	"auth-provider-server/api/models"
 	"auth-provider-server/api/utility"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -43,19 +44,19 @@ func InternalServerResponse(c *gin.Context) {
 
 func GenerateSession(user models.User) (models.SSOSession, string, error) {
 	newUUID, err := uuid.NewRandom()
-    if err != nil {
-        return models.SSOSession{}, "", err
-    }
+	if err != nil {
+		return models.SSOSession{}, "", err
+	}
 	session_token, err := utility.CryptoRandString(16)
 	if err != nil {
 		return models.SSOSession{}, "", err
 	}
-	token_hash, err := utility.HashString(session_token)
+	token_hash, err := utility.HashPassword(session_token)
 	if err != nil {
 		return models.SSOSession{}, "", err
 	}
 	return models.SSOSession{
-		ID:				  datatypes.BinUUID(newUUID),
+		ID:               datatypes.BinUUID(newUUID),
 		UserId:           user.ID,
 		SessionTokenHash: token_hash,
 		Status:           "Active",
@@ -69,6 +70,7 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 
 	if err := c.ShouldBindJSON(&loginPayload); err != nil {
 		UnauthorizedResponse(c)
+		fmt.Println("Payload missing")
 		return
 	}
 	var users []models.User
@@ -76,16 +78,19 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 
 	if len(users) <= 0 {
 		UnauthorizedResponse(c)
+		fmt.Println("User not found")
 		return
 	}
 
 	if !users[0].IsActive() {
 		UnauthorizedResponse(c)
+		fmt.Println("User not active")
 		return
 	}
 
-	if !utility.CheckHash(loginPayload.Password, users[0].PasswordHash) {
+	if !utility.CheckPasswordHash(loginPayload.Password, users[0].PasswordHash) {
 		UnauthorizedResponse(c)
+		fmt.Println("Wrong password")
 		return
 	}
 	session, session_token, err := GenerateSession(users[0])
@@ -98,7 +103,8 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 		InternalServerResponse(c)
 		return
 	}
-	c.SetCookie("ssid", session_token, int(session_exp_duration.Seconds()), "/", "localhost", false, true)
 
+	c.SetCookie("ssid", session_token, int(session_exp_duration.Seconds()), "/", "", false, true)
 	AuthResponse(c, db, &session)
+
 }

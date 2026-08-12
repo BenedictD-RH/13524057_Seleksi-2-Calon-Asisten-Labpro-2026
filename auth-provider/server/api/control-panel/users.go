@@ -2,6 +2,7 @@ package controlpanel
 
 import (
 	"net/http"
+
 	"github.com/google/uuid"
 
 	"auth-provider-server/api/models"
@@ -32,12 +33,12 @@ type PKeyPayload struct {
 
 func (payload CreateUserPayload) GetDBStruct() (models.User, error) {
 	newUUID, err := uuid.NewRandom()
-    if err != nil {
-        return models.User{}, err
-    }
-	hashedPass, err := utility.HashString(payload.Password)
+	if err != nil {
+		return models.User{}, err
+	}
+	hashedPass, err := utility.HashPassword(payload.Password)
 	return models.User{
-		ID: 		  datatypes.BinUUID(newUUID),
+		ID:           datatypes.BinUUID(newUUID),
 		Name:         payload.Name,
 		Email:        payload.Email,
 		PasswordHash: hashedPass,
@@ -49,7 +50,7 @@ func (payload UpdateUserPayload) GetDBStruct() (models.User, models.User, error)
 	var hashedPass string = ""
 	var err error = nil
 	if payload.Password != "" {
-		hashedPass, err = utility.HashString(payload.Password)
+		hashedPass, err = utility.HashPassword(payload.Password)
 	}
 
 	return models.User{

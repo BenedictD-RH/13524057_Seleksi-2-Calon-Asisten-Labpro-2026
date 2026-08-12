@@ -10,12 +10,12 @@ import (
 )
 
 type AccessTokenPayload struct {
-	Token string	`json:"access_token" binding:"required"`
+	Token string `json:"access_token" binding:"required"`
 }
 
-func FindAccessToken(access_tokens *[]models.AccessToken, access_token string) (*models.AccessToken) {
+func FindAccessToken(access_tokens *[]models.AccessToken, access_token string) *models.AccessToken {
 	for i := 0; i < len(*access_tokens); i++ {
-		if utility.CheckHash(access_token, (*access_tokens)[i].TokenHash) {
+		if utility.CheckPasswordHash(access_token, (*access_tokens)[i].TokenHash) {
 			return &(*access_tokens)[i]
 		}
 	}
@@ -48,9 +48,9 @@ func UserInfoRequest(c *gin.Context, db *gorm.DB) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"central_session_id": accessTokenModel.SsoSessionId,
-		"user_id": user.ID,
-		"name": user.Name,
-		"email": user.Email,
-		"groups": *(user.GetGroupsUUID(db)),
+		"user_id":            user.ID,
+		"name":               user.Name,
+		"email":              user.Email,
+		"groups":             *(user.GetGroupsUUID(db)),
 	})
 }

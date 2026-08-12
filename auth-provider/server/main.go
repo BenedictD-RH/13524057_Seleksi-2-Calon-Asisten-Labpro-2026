@@ -8,6 +8,7 @@ import (
 	"auth-provider-server/api/control-panel"
 
 	"github.com/gin-gonic/gin"
+  "github.com/gin-contrib/cors"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
   "github.com/joho/godotenv"
@@ -35,6 +36,14 @@ func main() {
   } 
 
   r := gin.Default()
+  r.Use(cors.New(cors.Config{
+    AllowOrigins:     []string{os.Getenv("AUTH_PORTAL_URI"), "http://localhost:8692", "http://localhost:8961"},
+    AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE"},
+    AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+    AllowCredentials: true,
+  }))
+  r.RedirectTrailingSlash = false
+  r.RedirectFixedPath = false
 
   r.POST("/users", func(c *gin.Context) {
     controlpanel.CreateUserRequest(c, db)
