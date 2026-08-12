@@ -42,7 +42,7 @@ func CreateCodeVerifier() (models.CodeVerifier, error) {
 
 func LoginRequest(c *gin.Context, db *gorm.DB) {
 	auth_server_url := os.Getenv("AUTH_SERVER_URL")
-	redirect_uri := os.Getenv("REDIRECT_URI")
+	redirect_uri := os.Getenv("REDIRECT_URI") + "/auth/callback"
 	client_id := os.Getenv("CLIENT_ID")
 
 	if auth_server_url == "" || redirect_uri == "" || client_id == "" {

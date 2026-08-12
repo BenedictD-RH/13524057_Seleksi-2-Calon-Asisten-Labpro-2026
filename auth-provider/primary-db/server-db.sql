@@ -37,7 +37,7 @@ CREATE TABLE applications(
     client_id VARCHAR(20) NOT NULL UNIQUE,
     client_secret_hash VARCHAR(60),
     status ENUM('Active', 'Inactive') NOT NULL,
-    redirect_url TEXT,
+    launch_url TEXT,
     logout_notification_url TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP

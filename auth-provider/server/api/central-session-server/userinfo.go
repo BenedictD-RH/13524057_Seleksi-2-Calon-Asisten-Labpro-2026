@@ -37,6 +37,12 @@ func UserInfoRequest(c *gin.Context, db *gorm.DB) {
 		UnauthorizedResponse(c)
 		return
 	}
+	accessTokenModel.UpdateStatus(db)
+	if !accessTokenModel.IsValid() {
+		UnauthorizedResponse(c)
+		return
+	}
+
 	var user models.User
 	var users []models.User
 	db.Where("id = ?", accessTokenModel.UserId).Find(&users)

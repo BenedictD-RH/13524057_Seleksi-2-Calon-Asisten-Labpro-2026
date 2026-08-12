@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 type LocalSession struct {
@@ -20,6 +21,21 @@ type LocalSession struct {
 	RevokedReason    string
 }
 
+func (session LocalSession) IsValid() bool {
+	return session.Status == "Active" && session.ExpiresAt.After(time.Now()) && session.RevokedAt == nil
+}
+
+func (session LocalSession) UpdateStatus(db *gorm.DB) {
+	if session.ExpiresAt.Before(time.Now()) {
+		db.Model(&LocalSession{}).Where("id = ?", session.ID).Updates(LocalSession{Status: "Expired"})
+	}
+}
+
+func (session LocalSession) MarkActivity(db *gorm.DB) {
+	t := time.Now()
+	db.Model(&LocalSession{}).Where("id = ?", session.ID).Updates(LocalSession{LastActivityAt: &t})
+}
+
 type CodeVerifier struct {
 	ID           datatypes.BinUUID `gorm:"default:UUID_TO_BIN(UUID())"`
 	State        string
@@ -27,6 +43,10 @@ type CodeVerifier struct {
 	Status       string
 	CreatedAt    time.Time
 	ExpiresAt    time.Time
+}
+
+func (code CodeVerifier) IsValid() bool {
+	return code.ExpiresAt.After(time.Now())
 }
 
 type ProfileCache struct {

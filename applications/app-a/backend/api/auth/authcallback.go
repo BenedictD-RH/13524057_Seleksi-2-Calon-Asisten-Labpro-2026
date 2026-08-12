@@ -129,9 +129,15 @@ func AuthCallbackRequest(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
+	if !codeVerifierModels[0].IsValid() {
+		UnauthorizedResponse(c)
+		return
+	}
+
 	payload := map[string]string{"code": code,
 		"code_verifier": codeVerifierModels[0].CodeVerifier,
-		"client_secret": client_secret}
+		"client_secret": client_secret,
+		"redirect_uri": "https://" + c.Request.Host + c.FullPath()}
 	jsonData, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/token", auth_server_url), bytes.NewReader(jsonData))
 

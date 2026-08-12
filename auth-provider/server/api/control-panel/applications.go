@@ -16,8 +16,13 @@ type RegisterAppPayload struct {
 	Name           string `json:"name" binding:"required"`
 	ClientID       string `json:"client_id" binding:"required"`
 	ClientSecret   string `json:"client_secret" binding:"required"`
-	RedirectURL    string `json:"redirect_url"`
+	LaunchURL      string `json:"launch_url"`
 	LogoutNotifURL string `json:"logout_notification_url"`
+}
+
+type RegisterAppURIPayload struct {
+	ClientID    string `json:"client_id" binding:"required"`
+	RedirectURI string `json:"redirect_uri" binding:"required"`
 }
 
 func (payload RegisterAppPayload) GetDBStruct() (models.Application, error) {
@@ -36,7 +41,7 @@ func (payload RegisterAppPayload) GetDBStruct() (models.Application, error) {
 		ClientId:              payload.ClientID,
 		ClientSecretHash:      client_secret_hash,
 		Status:                "Active",
-		RedirectUrl:           payload.RedirectURL,
+		LaunchUrl:             payload.LaunchURL,
 		LogoutNotificationUrl: payload.LogoutNotifURL,
 	}, nil
 }
@@ -61,6 +66,56 @@ func RegisterApplicationRequest(c *gin.Context, db *gorm.DB) {
 	}
 
 	if err := db.Create(&appModel).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Failed to register app: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "App successfully registered",
+	})
+}
+
+func RegisterAppURIRequest(c *gin.Context, db *gorm.DB) {
+	var uriPayload RegisterAppURIPayload
+
+	if err := c.ShouldBindJSON(&uriPayload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Failed to register app: " + err.Error(),
+		})
+		return
+	}
+	
+	var apps []models.Application
+	db.Find("client_id = ?", uriPayload.ClientID).Find(&apps)
+	if len(apps) != 1 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Failed to register app: client_id not registered",
+		})
+		return
+	}
+
+	newUUID, err := uuid.NewRandom()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to register app: " + err.Error(),
+		})
+		return
+	}
+
+	appUriModel := models.ApplicationRedirectURI{
+		ID:                    datatypes.BinUUID(newUUID),
+		ApplicationId: apps[0].ID,
+		RedirectUri: uriPayload.RedirectURI,
+	}
+
+	if err := db.Create(&appUriModel).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to register app: " + err.Error(),

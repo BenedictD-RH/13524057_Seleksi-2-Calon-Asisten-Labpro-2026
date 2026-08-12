@@ -26,6 +26,13 @@ func GetUserDataRequest(c *gin.Context, db *gorm.DB) {
 		return
 	}
 	local_session := sessions[0]
+	local_session.UpdateStatus(db)
+	if (!local_session.IsValid()) {
+		NoContentResponse(c)
+		return
+	}
+
+	local_session.MarkActivity(db)
 	var profile []models.ProfileCache
 	db.Where("external_user_id = ?", local_session.ExternalUserId).Find(&profile)
 

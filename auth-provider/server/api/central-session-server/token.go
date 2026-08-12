@@ -19,6 +19,7 @@ type TokenRequestPayload struct {
 	Code         string `json:"code" binding:"required"`
 	CodeVerifier string `json:"code_verifier" binding:"required"`
 	ClientSecret string `json:"client_secret" binding:"required"`
+	RedirectURI  string `json:"redirect_uri" binding:"required"`
 }
 
 func GenerateAccessToken(c *gin.Context, auth_code *models.AuthorizationCode) (*models.AccessToken, string) {
@@ -61,6 +62,17 @@ func TokenRequest(c *gin.Context, db *gorm.DB) {
 		UnauthorizedResponse(c)
 		return
 	}
+
+	if (!auth_codes[0].IsValid()) {
+		UnauthorizedResponse(c)
+		return
+	}
+
+	if (auth_codes[0].RedirectUri != tokenPayload.RedirectURI) {
+		UnauthorizedResponse(c)
+		return
+	}
+
 	auth_code := &auth_codes[0]
 	if !utility.CheckPasswordHash(tokenPayload.CodeVerifier, auth_code.CodeChallenge) {
 		UnauthorizedResponse(c)
