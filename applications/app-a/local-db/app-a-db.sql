@@ -19,7 +19,7 @@ CREATE TABLE profile_cache(
 
 CREATE TABLE local_sessions(
     id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
-    session_token_hash VARCHAR(60) NOT NULL,
+    session_token_hash VARCHAR(64) NOT NULL,
     external_user_id BINARY(16) NOT NULL,
     central_session_id BINARY(16) NOT NULL,
     application_id BINARY(16),

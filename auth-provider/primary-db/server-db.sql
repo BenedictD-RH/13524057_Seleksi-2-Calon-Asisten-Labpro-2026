@@ -2,7 +2,7 @@ CREATE TABLE users(
     id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
     name VARCHAR(20) NOT NULL,
     email VARCHAR(50) NOT NULL UNIQUE,
-    password_hash VARCHAR(60) NOT NULL,
+    password_hash VARCHAR(64) NOT NULL,
     status ENUM('Active', 'Inactive') NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP
@@ -75,7 +75,7 @@ CREATE TABLE application_group_policies(
 CREATE TABLE sso_sessions(
     id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
     user_id BINARY(16) NOT NULL,
-    session_token_hash VARCHAR(60) NOT NULL,
+    session_token_hash VARCHAR(64) NOT NULL,
     status ENUM('Active', 'Expired', 'Revoked') NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     expires_at DATETIME NOT NULL,
@@ -92,8 +92,8 @@ CREATE TABLE sso_sessions(
 
 CREATE TABLE authorization_codes(
     id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
-    code_hash VARCHAR(60) NOT NULL,
-    code_challenge VARCHAR(60) NOT NULL,
+    code_hash VARCHAR(64) NOT NULL,
+    code_challenge VARCHAR(64) NOT NULL,
     user_id BINARY(16) NOT NULL,
     application_id BINARY(16) NOT NULL,
     sso_session_id BINARY(16) NOT NULL,
@@ -117,7 +117,7 @@ CREATE TABLE authorization_codes(
 
 CREATE TABLE access_tokens(
     id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
-    token_hash VARCHAR(60) NOT NULL,
+    token_hash VARCHAR(64) NOT NULL,
     user_id BINARY(16) NOT NULL,
     application_id BINARY(16) NOT NULL,
     sso_session_id BINARY(16) NOT NULL,
