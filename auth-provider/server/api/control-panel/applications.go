@@ -15,15 +15,49 @@ import (
 type RegisterAppPayload struct {
 	Name           string `json:"name" binding:"required"`
 	ClientID       string `json:"client_id" binding:"required"`
-	ClientSecret   string `json:"client_secret" binding:"required"`
+	ClientSecret   string `json:"client_secret" binding:"required,gte=8"`
 	LaunchURL      string `json:"launch_url"`
 	LogoutNotifURL string `json:"logout_notification_url"`
+}
+
+type UpdateAppPayload struct {
+	Id       datatypes.BinUUID `json:"id" binding:"required"`
+	Name           string `json:"name"`
+	ClientID       string `json:"client_id"`
+	ClientSecret   string `json:"client_secret" binding:"omitempty,gte=8"`
+	LaunchURL      string `json:"launch_url"`
+	LogoutNotifURL string `json:"logout_notification_url"`
+}
+
+func (payload UpdateAppPayload) GetDBStruct() (models.Application, models.Application, error) {
+	var hashedPass string = ""
+	var err error = nil
+	if payload.ClientSecret != "" {
+		hashedPass, err = utility.HashPassword(payload.ClientSecret)
+	}
+
+	return models.Application{
+			ID: payload.Id,
+		},
+		models.Application{
+			Name:         	  payload.Name,
+			ClientId:         payload.ClientID,
+			ClientSecretHash: hashedPass,
+			LaunchUrl:        payload.LaunchURL,
+			LogoutNotificationUrl: payload.LogoutNotifURL,
+		}, err
+}
+
+func (payload PKeyPayload) GetAppModel() models.Application {
+	return models.Application{ID: payload.Id}
 }
 
 type RegisterAppURIPayload struct {
 	ClientID    string `json:"client_id" binding:"required"`
 	RedirectURI string `json:"redirect_uri" binding:"required"`
 }
+
+
 
 func (payload RegisterAppPayload) GetDBStruct() (models.Application, error) {
 	newUUID, err := uuid.NewRandom()
@@ -126,5 +160,80 @@ func RegisterAppURIRequest(c *gin.Context, db *gorm.DB) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "App successfully registered",
+	})
+}
+
+
+func GetAllApplicationsRequest(c *gin.Context, db *gorm.DB) {
+	var apps []models.Application
+
+	if err := db.Find(&apps).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to get app data: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, apps)
+}
+
+func UpdateAppRequest(c *gin.Context, db *gorm.DB) {
+	var appPayload UpdateAppPayload
+
+	if err := c.ShouldBindJSON(&appPayload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Failed to update app: " + err.Error(),
+		})
+		return
+	}
+
+	appQuery, updatedAppModel, err := appPayload.GetDBStruct()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to update app: " + err.Error(),
+		})
+		return
+	}
+
+	if err := db.Model(&appQuery).Updates(updatedAppModel).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Failed to update app: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "App successfully updated",
+	})
+}
+
+func RemoveAppRequest(c *gin.Context, db *gorm.DB) {
+	var appPKey PKeyPayload
+
+	if err := c.ShouldBindJSON(&appPKey); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Failed to remove app: " + err.Error(),
+		})
+		return
+	}
+
+	appModel := appPKey.GetAppModel()
+	if err := db.Delete(&appModel).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Failed to remove app: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "App successfully removed",
 	})
 }

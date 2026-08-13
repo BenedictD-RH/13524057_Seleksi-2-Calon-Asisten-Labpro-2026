@@ -105,5 +105,17 @@ func main() {
     controlpanel.RegisterApplicationRequest(c, db)
   })
 
+  r.GET("/apps", func(c *gin.Context){
+    controlpanel.GetAllApplicationsRequest(c, db)
+  })
+
+  r.PATCH("/apps", func(c *gin.Context){
+    controlpanel.UpdateAppRequest(c, db)
+  })
+
+  r.DELETE("/apps", func(c *gin.Context){
+    controlpanel.RemoveAppRequest(c, db)
+  })
+
   r.Run()
 }
