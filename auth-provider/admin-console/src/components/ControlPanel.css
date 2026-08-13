@@ -1,0 +1,16 @@
+.dataRow {
+    display: flex;
+    flex-direction: row;
+    list-style: none;
+    gap: 1vw
+}
+
+.dataCont {
+    width: 12vw;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: larger;
+    text-align: center;
+    font-family: 'Momo Trust Display';
+}
