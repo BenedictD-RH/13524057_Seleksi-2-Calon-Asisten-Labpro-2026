@@ -3,6 +3,8 @@ package controlpanel
 import (
 	"auth-provider-server/api/models"
 	"net/http"
+	"reflect"
+
 	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
@@ -93,6 +95,20 @@ func GetAllGroupsRequest(c *gin.Context, db *gorm.DB) {
 	}
 
 	c.JSON(http.StatusOK, groups)
+}
+
+func GetGroupFields(c *gin.Context) {
+	user := models.Group{}
+
+	t:= reflect.TypeOf(user)
+	var fieldNames []string
+	for i := 0; i < t.NumField(); i++ {
+		fieldNames = append(fieldNames, t.Field(i).Name)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"fields" : fieldNames,
+	})
 }
 
 func UpdateGroupRequest(c *gin.Context, db *gorm.DB) {

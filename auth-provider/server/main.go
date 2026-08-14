@@ -37,7 +37,11 @@ func main() {
 
   r := gin.Default()
   r.Use(cors.New(cors.Config{
-    AllowOrigins:     []string{os.Getenv("AUTH_PORTAL_URI"), "http://localhost:8692", "http://localhost:8961"},
+    AllowOrigins:     []string{os.Getenv("AUTH_PORTAL_URI"), 
+                               os.Getenv("ADMIN_CONSOLE_URI"), 
+                               "http://localhost:8692", 
+                               "http://localhost:8961",
+                              },
     AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE"},
     AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
     AllowCredentials: true,
@@ -52,6 +56,8 @@ func main() {
   r.GET("/users", func(c *gin.Context) {
     controlpanel.GetAllUsersRequest(c, db)
   })
+
+  r.GET("/users/fields", controlpanel.GetUserFields)
 
   r.PATCH("/users", func(c *gin.Context) {
     controlpanel.UpdateUserRequest(c, db)
@@ -68,6 +74,8 @@ func main() {
   r.GET("/groups", func(c *gin.Context) {
     controlpanel.GetAllGroupsRequest(c, db)
   })
+
+  r.GET("/groups/fields", controlpanel.GetGroupFields)
 
   r.PATCH("/groups", func(c *gin.Context) {
     controlpanel.UpdateGroupRequest(c, db)
@@ -108,6 +116,8 @@ func main() {
   r.GET("/apps", func(c *gin.Context){
     controlpanel.GetAllApplicationsRequest(c, db)
   })
+
+  r.GET("/apps/fields", controlpanel.GetApplicationFields)
 
   r.PATCH("/apps", func(c *gin.Context){
     controlpanel.UpdateAppRequest(c, db)

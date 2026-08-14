@@ -2,6 +2,7 @@ package controlpanel
 
 import (
 	"net/http"
+	"reflect"
 
 	"github.com/google/uuid"
 
@@ -113,6 +114,20 @@ func GetAllUsersRequest(c *gin.Context, db *gorm.DB) {
 	}
 
 	c.JSON(http.StatusOK, users)
+}
+
+func GetUserFields(c *gin.Context) {
+	user := models.User{}
+
+	t:= reflect.TypeOf(user)
+	var fieldNames []string
+	for i := 0; i < t.NumField(); i++ {
+		fieldNames = append(fieldNames, t.Field(i).Name)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"fields" : fieldNames,
+	})
 }
 
 func UpdateUserRequest(c *gin.Context, db *gorm.DB) {

@@ -4,6 +4,7 @@ import (
 	"auth-provider-server/api/models"
 	"auth-provider-server/api/utility"
 	"net/http"
+	"reflect"
 
 	"github.com/google/uuid"
 
@@ -176,6 +177,20 @@ func GetAllApplicationsRequest(c *gin.Context, db *gorm.DB) {
 	}
 
 	c.JSON(http.StatusOK, apps)
+}
+
+func GetApplicationFields(c *gin.Context) {
+	user := models.Application{}
+
+	t:= reflect.TypeOf(user)
+	var fieldNames []string
+	for i := 0; i < t.NumField(); i++ {
+		fieldNames = append(fieldNames, t.Field(i).Name)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"fields" : fieldNames,
+	})
 }
 
 func UpdateAppRequest(c *gin.Context, db *gorm.DB) {
