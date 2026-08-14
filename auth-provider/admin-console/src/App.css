@@ -4,3 +4,8 @@
 }
 
 
+.pagebody {
+    display: flex;
+    margin-left: 4vw;
+    margin-top:5vh;
+}

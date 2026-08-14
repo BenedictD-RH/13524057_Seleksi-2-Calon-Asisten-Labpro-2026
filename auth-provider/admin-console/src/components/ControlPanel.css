@@ -2,15 +2,118 @@
     display: flex;
     flex-direction: row;
     list-style: none;
-    gap: 1vw
+    gap: 1vw;
+    background-color: beige;
+    padding: 1vh 1vw 1vh 1vw;
+    margin:0;
+    align-items: center;
+    border-width: 1.5px 3px 1.5px 3px;
+    border-style: solid;
+    border-color: black;
+}
+
+.dataLabel {
+    z-index: -1;
+}
+
+.dataRowCont {
+    display: flex;
+    flex-direction: row;
 }
 
 .dataCont {
-    width: 12vw;
+    width: 11vw;
+    text-align: center;
+}
+
+.dataCont > * {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-    font-size: larger;
+    font-size: large;
+    font-family: 'Momo Trust Display';
+}
+
+.createCont {
+    width: 11vw;
+    text-align: center;
+}
+
+.createCont > * {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: large;
+    font-family: 'Momo Trust Display';
+}
+
+.createInput {
+    background-color: white;
+    text-align: center;
+}
+
+ul {
+    list-style: none;
+    list-style-type: none;
+    width: fit-content;
+    padding: 0;
+}
+
+li {
+    list-style: none;
+    list-style-type: none;
+}
+
+.fieldRow {
+    display: flex;
+    flex-direction: row;
+    gap: 1vw;
+    background-color: darkslategray;
+    padding: 1vh 1vw 1vh 1vw;
+    margin:0;
+    border-width: 1.5px 3px 1.5px 3px;
+    border-style: solid;
+    border-color: black;
+}
+
+
+.fieldCont {
+    width: 11vw;
+    font-size: x-large;
     text-align: center;
     font-family: 'Momo Trust Display';
+    color: white;
+}
+
+.dataInput {
+    background-color: transparent;
+    text-align: center;
+    border: none;
+}
+
+.rowBtn {
+    width: 2.5vw;
+    font-family: 'Russo One';
+    color: white;
+}
+
+.deleteBtn {
+    font-size: x-large;
+    background-color: red;
+}
+
+.createBtn {
+    font-size: xx-large;
+    background-color: limegreen;
+}
+
+.idField {
+    font-size: 1vh;
+}
+
+.created_atField {
+    font-size: medium;
+}
+.updated_atField {
+    font-size: medium;
 }

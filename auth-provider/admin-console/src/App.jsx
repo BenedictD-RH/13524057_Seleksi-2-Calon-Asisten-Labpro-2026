@@ -5,6 +5,10 @@ import './App.css'
 
 function App() {
   const [pathData, setPathData] = useState([])
+  const [remountKey, setRemountKey] = useState(0)
+  const remountData = () => {
+    setRemountKey(remountKey + 1)
+  }
   const path = window.location.pathname
   useEffect(() => {
     if (path != "") {
@@ -23,7 +27,7 @@ function App() {
         console.log(err)
       })
     }
-  }, [])
+  }, [remountKey])
 
   return (
     <>
@@ -31,7 +35,7 @@ function App() {
         <NavBar></NavBar>
       </div>
       <div className='pagebody'>
-        {pathData.length > 0 ? <ControlPanel pageData={pathData}></ControlPanel> : <></>}
+        {<ControlPanel pageData={pathData} remount={remountData}></ControlPanel>}
       </div>
     </>
   )
