@@ -3,11 +3,38 @@ import { useEffect, useState, useRef } from 'react'
 import { stringify } from 'uuid';
 
 function isUpdatableField(fieldKey) {
-    const unupdatableFields = ['id', 'created_at', 'updated_at']
-    for (const key of unupdatableFields) {
-        if (fieldKey == key) return false
+    if (fieldKey.substring(fieldKey.length - 2, fieldKey.length).toLowerCase() == 'id') {
+        return false
+    } else if (fieldKey.substring(fieldKey.length - 2, fieldKey.length).toLowerCase() == 'at') {
+        return false
     }
     return true
+}
+
+function getSubsectionPaths() {
+    const path = window.location.pathname
+    if (path == "/users") {
+        return ["/groups"]
+    } else if (path == "/groups") {
+        return ["/users"]
+    }
+    return []
+}
+
+function getFieldClass(field) {
+    if (field.substring(field.length - 2, field.length).toLowerCase() == 'id') {
+        return "idField"
+    } else if (field.substring(field.length - 2, field.length).toLowerCase() == 'at') {
+        return "dateField"
+    }
+    return field.toLowerCase() + "Field"
+}
+
+function formatEntryData(entry, dataKey) {
+    if (dataKey.substring(dataKey.length - 2, dataKey.length).toLowerCase() == 'id') {
+        return stringify(entry[dataKey])
+    }
+    return entry[dataKey]
 }
 
 // 0 == Cannot be filled
@@ -62,7 +89,7 @@ function seperateFieldName(fieldName) {
 }
 
 function DataContainer({entry, dataKey, remount}) {
-    const data = dataKey != 'id' ? entry[dataKey] : stringify(entry[dataKey])
+    const data = formatEntryData(entry, dataKey)
     const [inputValue, setInputValue] = useState(data)
     const handleOnChange = (event) => {
         setInputValue(event.target.value)
@@ -108,17 +135,18 @@ function DataContainer({entry, dataKey, remount}) {
     }
 
     return (
-        <div className='dataCont'>
+        <div className={'dataCont ' + getFieldClass(dataKey) + "Cont"}>
             {isUpdatableField(dataKey) ? 
-                <input className={'dataInput ' + dataKey + 'Field'}
+                <input className={'dataInput ' + getFieldClass(dataKey)}
                        value={inputValue} onChange={handleOnChange} onKeyDown={handleDataUpdate} onFocus={handleOnFocus} onBlur={handleOnBlur}></input> : 
-                <div className={'dataLabel ' + dataKey + 'Field'}>{data}</div>
+                <div className={'dataLabel ' + getFieldClass(dataKey)}>{data}</div>
             }
         </div>
     )
 }
 
-function EntryRow({entry, remount}) {
+function EntryRow({entry, remount, subsection = false}) {
+    const [expanded, setExpanded] = useState(false)
     const keys = entry ? Object.keys(entry) : []
     const handleDelete = () => {
         const path = window.location.pathname
@@ -138,18 +166,27 @@ function EntryRow({entry, remount}) {
         })
     }
 
+    const handleExpand = () => {
+        setExpanded(!expanded)
+    }
+
     return (
-        <div className='dataRowCont'>
-            <div className='rowBtn'></div>
-            <ul className='dataRow'>
-                {keys.map((key, index) => (
-                    <li key={index}>
-                        <DataContainer entry={entry} dataKey={key} remount={remount}></DataContainer>
-                    </li>
-                ))}
-            </ul>
-            <button className='rowBtn deleteBtn' onClick={handleDelete}>X</button>
-        </div> 
+        <>
+            <div className='dataRowCont'>
+                {!subsection ? <button className='rowBtn expandBtn' onClick={handleExpand}>{expanded ? 'V' : '>'}</button> : 
+                               <div className='rowBtn'></div>
+                }
+                <ul className='dataRow'>
+                    {keys.map((key, index) => (
+                        <li key={index}>
+                            <DataContainer entry={entry} dataKey={key} remount={remount}></DataContainer>
+                        </li>
+                    ))}
+                </ul>
+                <button className='rowBtn deleteBtn' onClick={handleDelete}>X</button>
+            </div>
+            {expanded ? <SubsectionGroup uuid={entry['id']} remount={remount}></SubsectionGroup> : <></>}
+        </>
     )
 }
 
@@ -163,9 +200,9 @@ function CreateInput({fieldKey, changeFieldValue, resetTrigger}) {
         setValue('')
     }, [resetTrigger])
     return (
-        <div className='createCont'>
+        <div className={'createCont '+ getFieldClass(fieldKey) + "Cont"}>
             {getRequirementCategory(fieldKey) != 0 ? 
-                <input className='createInput' value={value} onChange={handleValueChange}></input> : 
+                <input className={'createInput ' + getFieldClass(fieldKey)} value={value} onChange={handleValueChange}></input> : 
                 <></>
             }
         </div>
@@ -182,7 +219,6 @@ function TableHeader({remount}) {
     const handleCreateFormChange = (fieldKey, value) => {
         const copy = createForm
         copy[toPayloadFieldKey(fieldKey)] = value
-        console.log(copy)
         setCreateForm(copy)
     }
     const path = window.location.pathname
@@ -199,7 +235,7 @@ function TableHeader({remount}) {
             return res.json()
         }).then((data) => {
             if (data['status'] == 'success') {
-                setCreateForm([])
+                setCreateForm({})
                 remount()
                 triggerFieldReset()
             } else {
@@ -237,7 +273,7 @@ function TableHeader({remount}) {
                 <ul className='fieldRow'>
                     {fields != null ? fields.fields.map((key, index) => (
                         <li key={index}>
-                            <div className='fieldCont'>{seperateFieldName(key)}</div>
+                            <div className={'fieldCont ' + getFieldClass(key) + "Cont"}>{seperateFieldName(key)}</div>
                         </li>
                     )) : <></>}
                 </ul>
@@ -259,12 +295,123 @@ function TableHeader({remount}) {
     )
 }
 
+function SubsectionAddList({subsectionComplement, remount}) {
+    return (
+        <div>
+            <div className="dataRowCont">
+                <button className='rowBtn createBtn'>+</button>
+                <ul className='fieldRow'>
+                    {fields != null ? fields.fields.map((key, index) => (
+                        <li key={index}>
+                            <div className={'fieldCont ' +getFieldClass(key) + "Cont"}>{seperateFieldName(key)}</div>
+                        </li>
+                    )) : <></>}
+                </ul>
+            </div>
+            {subsectionComplement.map((entry, index) => (
+                <li key={index}><EntryRow entry={entry} remount={remount} subsection={true}></EntryRow></li>
+            ))}
+        </div>
+    )
+}
+
+function SubsectionHeader({subsection_path, subsection_uuid, remount}) {
+    const path = window.location.pathname
+    const [fields, setFields] = useState(null)
+
+    useEffect(() => {
+        fetch('/server' + path + subsection_path + "/fields")
+        .then((res) => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+            return null
+        })
+        .then((data) => {
+            console.log(data)
+            setFields(data)
+        })
+        .catch((err) => {
+            console.log(err)
+        })
+    }, [])
+
+    return (
+        <div className="dataRowCont">
+            <button className='rowBtn createBtn'>+</button>
+            <ul className='fieldRow'>
+                {fields != null ? fields.fields.map((key, index) => (
+                    <li key={index}>
+                        <div className={'fieldCont ' +getFieldClass(key) + "Cont"}>{seperateFieldName(key)}</div>
+                    </li>
+                )) : <></>}
+            </ul>
+        </div>
+    )
+}
+
+function Subsection({subsection_path, subsection_uuid, remount}) {
+    const path = window.location.pathname
+    const [subsectionData, setSubsectionData] = useState([])
+
+    useEffect(() => {
+        fetch('/server' + path + subsection_path + "/query", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({'id' : subsection_uuid}),
+        })
+        .then((res) => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+            return null
+        })
+        .then((data) => {
+            console.log(data)
+            setSubsectionData(data)
+        })
+        .catch((err) => {
+            console.log(err)
+        })
+    }, [])
+    
+    return (
+        <ul className='subsectionRowCont'>
+            <SubsectionHeader subsection_path={subsection_path} subsection_uuid={subsection_uuid} remount={remount}></SubsectionHeader>
+            {subsectionData.map((entry, index) => (
+                <li key={index}><EntryRow entry={entry} remount={remount} subsection={true}></EntryRow></li>
+            ))}
+        </ul>
+    )
+}
+
+function SubsectionGroup({uuid, remount}) {
+    const path = window.location.pathname
+    const subsection_paths = getSubsectionPaths()
+
+    return (
+        <ul>
+            {subsection_paths.map((path, index) => (
+                <li key={index}><Subsection subsection_path={path} subsection_uuid={uuid} remount={remount}></Subsection></li>
+            ))}
+        </ul>
+    )
+}
+
 function ControlPanel({pageData, remount}) {
     return (
         <div>
             <TableHeader remount={remount}></TableHeader>
             {pageData.map((entry, index) => (
-                <li key={entry.id}><EntryRow entry={entry} remount={remount}></EntryRow></li>
+                <li key={entry.id}>
+                    <EntryRow entry={entry} remount={remount}></EntryRow></li>
             ))}
         </div>
     )
