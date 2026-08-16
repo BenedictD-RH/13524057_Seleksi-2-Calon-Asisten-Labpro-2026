@@ -28,6 +28,12 @@ type UpdateUserPayload struct {
 	Status   string            `json:"status"`
 }
 
+type UserCompact struct {
+	Id       datatypes.BinUUID `json:"id"`
+	Name     string            `json:"name"`
+	Email    string            `json:"email"`
+}
+
 type PKeyPayload struct {
 	Id datatypes.BinUUID `json:"id" binding:"required"`
 }

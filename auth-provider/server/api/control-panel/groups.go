@@ -23,6 +23,11 @@ type UpdateGroupPayload struct {
 	Description string            `json:"description"`
 }
 
+type GroupCompact struct {
+	Id          datatypes.BinUUID `json:"id"`
+	Name        string            `json:"name"`
+}
+
 func (payload CreateGroupPayload) GetDBStruct() (models.Group, error) {
 	newUUID, err := uuid.NewRandom()
     if err != nil {
