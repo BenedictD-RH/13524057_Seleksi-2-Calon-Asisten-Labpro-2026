@@ -18,8 +18,8 @@ CREATE TABLE groups_(
 
 CREATE TABLE user_groups(
     id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
-    user_id BINARY(16) UNIQUE,
-    group_id BINARY(16) UNIQUE,
+    user_id BINARY(16),
+    group_id BINARY(16),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT fk_ug_user
         FOREIGN KEY (user_id)
@@ -28,7 +28,8 @@ CREATE TABLE user_groups(
     CONSTRAINT fk_ug_group
         FOREIGN KEY (group_id)
         REFERENCES groups_(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+    UNIQUE KEY uq_user_groups (user_id, group_id) 
 );
 
 CREATE TABLE applications(
