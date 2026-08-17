@@ -30,6 +30,18 @@ type UpdateAppPayload struct {
 	LogoutNotifURL string `json:"logout_notification_url"`
 }
 
+type AppCompact struct {
+	Id       	   datatypes.BinUUID `json:"id"`
+	Name           string `json:"name"`
+	ClientID       string `json:"client_id"`
+}
+
+type URICompact struct {
+	Id       	   datatypes.BinUUID `json:"id"`
+	RedirectUri    string `json:"redirect_uri"`
+	RegisteredAt   string `json:"registered_at"`
+}
+
 func (payload UpdateAppPayload) GetDBStruct() (models.Application, models.Application, error) {
 	var hashedPass string = ""
 	var err error = nil
@@ -53,10 +65,11 @@ func (payload PKeyPayload) GetAppModel() models.Application {
 	return models.Application{ID: payload.Id}
 }
 
-type RegisterAppURIPayload struct {
-	ClientID    string `json:"client_id" binding:"required"`
+type AppURIPayload struct {
+	AppId    datatypes.BinUUID `json:"app_id" binding:"required"`
 	RedirectURI string `json:"redirect_uri" binding:"required"`
 }
+
 
 
 
@@ -115,7 +128,7 @@ func RegisterApplicationRequest(c *gin.Context, db *gorm.DB) {
 }
 
 func RegisterAppURIRequest(c *gin.Context, db *gorm.DB) {
-	var uriPayload RegisterAppURIPayload
+	var uriPayload AppURIPayload
 
 	if err := c.ShouldBindJSON(&uriPayload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -126,7 +139,7 @@ func RegisterAppURIRequest(c *gin.Context, db *gorm.DB) {
 	}
 	
 	var apps []models.Application
-	db.Find("client_id = ?", uriPayload.ClientID).Find(&apps)
+	db.Where("id = ?", uriPayload.AppId).Find(&apps)
 	if len(apps) != 1 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
@@ -139,7 +152,7 @@ func RegisterAppURIRequest(c *gin.Context, db *gorm.DB) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
-			"message": "Failed to register app: " + err.Error(),
+			"message": "Failed to register app URI: " + err.Error(),
 		})
 		return
 	}
@@ -153,14 +166,54 @@ func RegisterAppURIRequest(c *gin.Context, db *gorm.DB) {
 	if err := db.Create(&appUriModel).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
-			"message": "Failed to register app: " + err.Error(),
+			"message": "Failed to register app URI: " + err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
-		"message": "App successfully registered",
+		"message": "App URI successfully registered",
+	})
+}
+
+func GetAllAppURIRequest(c *gin.Context, db *gorm.DB) {
+	var appPKey PKeyPayload
+
+	if err := c.ShouldBindJSON(&appPKey); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Failed to remove app URI: " + err.Error(),
+		})
+		return
+	}
+
+	var URIs []URICompact
+
+	db.Model(&models.ApplicationRedirectURI{}).
+	   Select("id, redirect_uri, created_at AS registered_at").
+	   Where("application_id = ?", appPKey.Id).
+	   Find(&URIs)
+
+	c.JSON(http.StatusOK, URIs)
+}
+
+func RemoveAppURIRequest(c *gin.Context, db *gorm.DB) {
+	var uriPKey PKeyPayload
+
+	if err := c.ShouldBindJSON(&uriPKey); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Failed to remove app URI: " + err.Error(),
+		})
+		return
+	}
+	
+	db.Where("id = ?", uriPKey.Id).Delete(&models.ApplicationRedirectURI{})
+
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "App URI successfully removed",
 	})
 }
 
@@ -192,6 +245,21 @@ func GetApplicationFields(c *gin.Context) {
 		"fields" : fieldNames,
 	})
 }
+
+func GetURIFields(c *gin.Context) {
+	uri := URICompact{}
+
+	t:= reflect.TypeOf(uri)
+	var fieldNames []string
+	for i := 0; i < t.NumField(); i++ {
+		fieldNames = append(fieldNames, t.Field(i).Name)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"fields" : fieldNames,
+	})
+}
+
 
 func UpdateAppRequest(c *gin.Context, db *gorm.DB) {
 	var appPayload UpdateAppPayload

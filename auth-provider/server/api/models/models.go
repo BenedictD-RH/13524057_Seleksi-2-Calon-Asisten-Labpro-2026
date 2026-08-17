@@ -62,6 +62,8 @@ type Application struct {
 	UpdatedAt             time.Time         `json:"updated_at"`
 }
 
+
+
 type AuthorizationCode struct {
 	ID            datatypes.BinUUID `gorm:"default:UUID_TO_BIN(UUID())"`
 	CodeHash      string
@@ -152,5 +154,18 @@ type ApplicationRedirectURI struct {
 func (ApplicationRedirectURI) TableName() string {
 	return "application_redirect_uris"
 }
+
+type ApplicationGroupPolicy struct {
+	ID            datatypes.BinUUID `gorm:"type:binary(16);primaryKey;default:(UUID_TO_BIN(UUID()))"`
+	ApplicationId datatypes.BinUUID
+	GroupId   	  datatypes.BinUUID
+	Effect 		  string
+	CreatedAt     time.Time
+}
+
+func (ApplicationGroupPolicy) TableName() string {
+	return "application_group_policies"
+}
+
 
 

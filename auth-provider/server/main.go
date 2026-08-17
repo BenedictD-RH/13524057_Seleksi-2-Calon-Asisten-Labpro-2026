@@ -90,12 +90,12 @@ func main() {
 	r.POST("/users/groups/query", func(c *gin.Context) {
 		controlpanel.GetGroupsFromUserRequest(c, db)
 	})
-  
-  r.POST("/users/groups/query/complement", func(c *gin.Context) {
+
+	r.POST("/users/groups/query/complement", func(c *gin.Context) {
 		controlpanel.GetGroupsUserIsNotInRequest(c, db)
 	})
 
-  r.GET("/users/groups/fields", controlpanel.GetGroupsFromUserFieldsRequest)
+	r.GET("/users/groups/fields", controlpanel.GetGroupsFromUserFieldsRequest)
 
 	r.DELETE("/users/groups", func(c *gin.Context) {
 		controlpanel.RemoveUserFromGroup(c, db)
@@ -105,18 +105,40 @@ func main() {
 		controlpanel.AddUserToGroup(c, db)
 	})
 
-  r.POST("/groups/users/query", func(c *gin.Context) {
+	r.POST("/groups/users/query", func(c *gin.Context) {
 		controlpanel.GetUsersFromGroupRequest(c, db)
 	})
 
-  r.POST("/groups/users/query/complement", func(c *gin.Context) {
+	r.POST("/groups/users/query/complement", func(c *gin.Context) {
 		controlpanel.GetUsersNotInGroupRequest(c, db)
 	})
 
-  r.GET("/groups/users/fields", controlpanel.GetUsersFromGroupFieldsRequest)
+	r.GET("/groups/users/fields", controlpanel.GetUsersFromGroupFieldsRequest)
 
 	r.DELETE("/groups/users", func(c *gin.Context) {
 		controlpanel.RemoveUserFromGroup(c, db)
+	})
+
+	r.POST("/groups/apps", func(c *gin.Context) {
+		controlpanel.AddAppGroupPolicyRequest(c, db)
+	})
+
+	r.POST("/groups/apps/query", func(c *gin.Context) {
+		controlpanel.GetAppPoliciesFromGroupRequest(c, db)
+	})
+
+	r.POST("/groups/apps/query/complement", func(c *gin.Context) {
+		controlpanel.GetAppsNotInGroupPoliciesRequest(c, db)
+	})
+
+	r.GET("/groups/apps/fields", controlpanel.GetAppPoliciesFieldFromGroupRequest)
+
+	r.PATCH("/groups/apps", func(c *gin.Context) {
+		controlpanel.UpdateAppGroupPolicyRequest(c, db)
+	})
+
+	r.DELETE("/groups/apps", func(c *gin.Context) {
+		controlpanel.RemoveAppGroupPolicyRequest(c, db)
 	})
 
 	r.POST("/login", func(c *gin.Context) {
@@ -151,6 +173,42 @@ func main() {
 
 	r.DELETE("/apps", func(c *gin.Context) {
 		controlpanel.RemoveAppRequest(c, db)
+	})
+
+	r.POST("/apps/groups", func(c *gin.Context) {
+		controlpanel.AddAppGroupPolicyRequest(c, db)
+	})
+
+	r.POST("/apps/groups/query", func(c *gin.Context) {
+		controlpanel.GetGroupPoliciesFromAppRequest(c, db)
+	})
+
+	r.POST("/apps/groups/query/complement", func(c *gin.Context) {
+		controlpanel.GetGroupsNotInAppPoliciesRequest(c, db)
+	})
+
+	r.GET("/apps/groups/fields", controlpanel.GetGroupPoliciesFieldFromAppRequest)
+
+	r.PATCH("/apps/groups", func(c *gin.Context) {
+		controlpanel.UpdateAppGroupPolicyRequest(c, db)
+	})
+
+	r.DELETE("/apps/groups", func(c *gin.Context) {
+		controlpanel.RemoveAppGroupPolicyRequest(c, db)
+	})
+
+	r.POST("/apps/uri", func(c *gin.Context) {
+		controlpanel.RegisterAppURIRequest(c, db)
+	})
+
+	r.POST("/apps/uri/query", func(c *gin.Context) {
+		controlpanel.GetAllAppURIRequest(c, db)
+	})
+
+	r.GET("/apps/uri/fields", controlpanel.GetURIFields)
+
+	r.DELETE("/apps/uri", func(c *gin.Context) {
+		controlpanel.RemoveAppURIRequest(c, db)
 	})
 
 	r.Run()

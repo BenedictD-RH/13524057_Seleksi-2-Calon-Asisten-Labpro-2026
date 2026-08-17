@@ -44,13 +44,6 @@ func (payload UserGroupPayload) GetDBStructCreate() (models.UserGroup, error) {
 	}, nil
 }
 
-func (payload UserGroupPayload) GetDBStructDelete() models.UserGroup {
-	return models.UserGroup{
-		UserId:  payload.UserId,
-		GroupId: payload.GroupId,
-	}
-}
-
 func AddUserToGroup(c *gin.Context, db *gorm.DB) {
 	var userGroupPayload UserGroupPayload
 
@@ -96,15 +89,7 @@ func RemoveUserFromGroup(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	userGroupModel := userGroupPayload.GetDBStructDelete()
-
-	if err := db.Delete(&userGroupModel).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": "Failed to remove user from group: " + err.Error(),
-		})
-		return
-	}
+	db.Where("user_id = ? AND group_id = ?", userGroupPayload.UserId, userGroupPayload.GroupId).Delete(&models.UserGroup{})
 
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
@@ -197,7 +182,7 @@ func GetGroupsUserIsNotInRequest(c *gin.Context, db *gorm.DB) {
 					   Joins("RIGHT JOIN user_groups ON user_groups.group_id = groups_.id").
 					   Where("user_groups.user_id = ?", userPKey.Id)
 	
-	db.Model(&models.User{}).Select("id, name").Where("id NOT IN (?)", groupsUserIsIn).Find(&groups)
+	db.Model(&models.Group{}).Select("id, name").Where("id NOT IN (?)", groupsUserIsIn).Find(&groups)
 
 	c.JSON(http.StatusOK, groups)
 }
