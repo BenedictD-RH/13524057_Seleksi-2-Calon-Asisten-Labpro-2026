@@ -132,3 +132,32 @@ li {
 .descriptionFieldCont, .descriptionField {
     width: 25vw;
 }
+
+
+.addListRow {
+    background-color: silver;
+}
+
+
+.subsectionTitle {
+    width: 30vw;
+    text-align: center;
+    font-size: x-large;
+    font-family: 'Momo Trust Display';
+    color: white;
+    background-color: #1f1f1f;
+    padding: 1vh 1vw 1vh 1vw;
+    margin:0;
+    border-width: 1.5px 3px 1.5px 3px;
+    border-style: solid;
+    border-color: black;
+}
+
+.subsectionTitleExpanded {
+    flex-grow: 1;
+}
+
+.subsectionPreview {
+    display: flex;
+    flex-direction: row;
+}
