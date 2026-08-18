@@ -33,6 +33,17 @@ func main() {
 		return
 	}
 
+	mq_pass := os.Getenv("MESSAGE_QUEUE_DB_PASS")
+	dsn_mq := fmt.Sprintf("root:%s@tcp(localhost:5343)/auth-provider-db?charset=utf8mb4&parseTime=True&loc=Local", mq_pass)
+	mq, db_err := gorm.Open(mysql.Open(dsn_mq), &gorm.Config{})
+	if db_err != nil {
+		fmt.Println(db_err)
+		return
+	}
+	if mq == nil {
+		return
+	}
+
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{os.Getenv("AUTH_PORTAL_URI"),
@@ -58,11 +69,11 @@ func main() {
 	r.GET("/users/fields", controlpanel.GetUserFields)
 
 	r.PATCH("/users", func(c *gin.Context) {
-		controlpanel.UpdateUserRequest(c, db)
+		controlpanel.UpdateUserRequest(c, db, mq)
 	})
 
 	r.DELETE("/users", func(c *gin.Context) {
-		controlpanel.DeleteUserRequest(c, db)
+		controlpanel.DeleteUserRequest(c, db, mq)
 	})
 
 	r.POST("/groups", func(c *gin.Context) {
@@ -80,7 +91,7 @@ func main() {
 	})
 
 	r.DELETE("/groups", func(c *gin.Context) {
-		controlpanel.DeleteGroupRequest(c, db)
+		controlpanel.DeleteGroupRequest(c, db, mq)
 	})
 
 	r.POST("/users/groups", func(c *gin.Context) {
@@ -98,7 +109,7 @@ func main() {
 	r.GET("/users/groups/fields", controlpanel.GetGroupsFromUserFieldsRequest)
 
 	r.DELETE("/users/groups", func(c *gin.Context) {
-		controlpanel.RemoveUserFromGroup(c, db)
+		controlpanel.RemoveUserFromGroup(c, db, mq)
 	})
 
 	r.POST("/groups/users", func(c *gin.Context) {
@@ -116,7 +127,7 @@ func main() {
 	r.GET("/groups/users/fields", controlpanel.GetUsersFromGroupFieldsRequest)
 
 	r.DELETE("/groups/users", func(c *gin.Context) {
-		controlpanel.RemoveUserFromGroup(c, db)
+		controlpanel.RemoveUserFromGroup(c, db, mq)
 	})
 
 	r.POST("/groups/apps", func(c *gin.Context) {
@@ -134,11 +145,11 @@ func main() {
 	r.GET("/groups/apps/fields", controlpanel.GetAppPoliciesFieldFromGroupRequest)
 
 	r.PATCH("/groups/apps", func(c *gin.Context) {
-		controlpanel.UpdateAppGroupPolicyRequest(c, db)
+		controlpanel.UpdateAppGroupPolicyRequest(c, db, mq)
 	})
 
 	r.DELETE("/groups/apps", func(c *gin.Context) {
-		controlpanel.RemoveAppGroupPolicyRequest(c, db)
+		controlpanel.RemoveAppGroupPolicyRequest(c, db, mq)
 	})
 
 	r.POST("/login", func(c *gin.Context) {
@@ -190,11 +201,11 @@ func main() {
 	r.GET("/apps/groups/fields", controlpanel.GetGroupPoliciesFieldFromAppRequest)
 
 	r.PATCH("/apps/groups", func(c *gin.Context) {
-		controlpanel.UpdateAppGroupPolicyRequest(c, db)
+		controlpanel.UpdateAppGroupPolicyRequest(c, db, mq)
 	})
 
 	r.DELETE("/apps/groups", func(c *gin.Context) {
-		controlpanel.RemoveAppGroupPolicyRequest(c, db)
+		controlpanel.RemoveAppGroupPolicyRequest(c, db, mq)
 	})
 
 	r.POST("/apps/uri", func(c *gin.Context) {
@@ -209,6 +220,10 @@ func main() {
 
 	r.DELETE("/apps/uri", func(c *gin.Context) {
 		controlpanel.RemoveAppURIRequest(c, db)
+	})
+
+	r.POST("/logout", func(c *gin.Context) {
+		centralsessionserver.LogoutRequest(c, db, mq)
 	})
 
 	r.Run()

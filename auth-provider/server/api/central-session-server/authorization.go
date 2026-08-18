@@ -96,6 +96,12 @@ func AuthResponse(c *gin.Context, db *gorm.DB, session *models.SSOSession) {
 		return
 	}
 
+	user := models.User{ID: session.UserId}
+	if (!user.IsAuthorized(apps[0].ID, db)) {
+		UnauthorizedResponse(c)
+		return
+	}
+
 	auth_code_model, auth_code := GenerateAuthCode(code_challenge, client_id, *session, apps[0], c, db)
 	if auth_code_model == nil && auth_code == "" {
 		return

@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
+	eventpublisher "auth-provider-server/api/event-publisher"
 	"auth-provider-server/api/models"
 	"auth-provider-server/api/utility"
 
@@ -136,7 +137,7 @@ func GetUserFields(c *gin.Context) {
 	})
 }
 
-func UpdateUserRequest(c *gin.Context, db *gorm.DB) {
+func UpdateUserRequest(c *gin.Context, db, mq *gorm.DB) {
 	var userPayload UpdateUserPayload
 
 	if err := c.ShouldBindJSON(&userPayload); err != nil {
@@ -145,6 +146,13 @@ func UpdateUserRequest(c *gin.Context, db *gorm.DB) {
 			"message": "Failed to update user: " + err.Error(),
 		})
 		return
+	}
+
+	if (userPayload.Status == "Inactive") {
+		OnSetUserInactiveUpdate(userPayload.Id, db, mq)
+	}
+	if (userPayload.Password != "") {
+		OnUserPasswordChangeUpdate(userPayload.Id, db, mq)
 	}
 
 	userQuery, updatedUserModel, err := userPayload.GetDBStruct()
@@ -170,7 +178,7 @@ func UpdateUserRequest(c *gin.Context, db *gorm.DB) {
 	})
 }
 
-func DeleteUserRequest(c *gin.Context, db *gorm.DB) {
+func DeleteUserRequest(c *gin.Context, db, mq *gorm.DB) {
 	var userPKey PKeyPayload
 
 	if err := c.ShouldBindJSON(&userPKey); err != nil {
@@ -180,6 +188,8 @@ func DeleteUserRequest(c *gin.Context, db *gorm.DB) {
 		})
 		return
 	}
+
+	OnDeleteUser(userPKey.Id, db, mq)
 
 	userModel := userPKey.GetUserModel()
 	if err := db.Delete(&userModel).Error; err != nil {
@@ -194,4 +204,29 @@ func DeleteUserRequest(c *gin.Context, db *gorm.DB) {
 		"status":  "success",
 		"message": "User successfully deleted",
 	})
+}
+
+
+func OnUserPasswordChangeUpdate(user_id datatypes.BinUUID, db, mq *gorm.DB) {
+	user := models.User{ID: user_id}
+	cs_id := user.GetLatestActiveSession(db)
+	if cs_id != nil {
+		eventpublisher.PublishEvent(user.ID, cs_id, nil, "PasswordChanged", "user_password_changed", mq)
+	}
+}
+
+func OnSetUserInactiveUpdate(user_id datatypes.BinUUID, db, mq *gorm.DB) {
+	user := models.User{ID: user_id}
+	cs_id := user.GetLatestActiveSession(db)
+	if cs_id != nil {
+		eventpublisher.PublishEvent(user.ID, cs_id, nil, "SessionRevoked", "user_set_inactive", mq)
+	}
+}
+
+func OnDeleteUser(user_id datatypes.BinUUID, db, mq *gorm.DB) {
+	user := models.User{ID: user_id}
+	cs_id := user.GetLatestActiveSession(db)
+	if cs_id != nil {
+		eventpublisher.PublishEvent(user.ID, cs_id, nil, "SessionRevoked", "user_deleted", mq)
+	}
 }

@@ -18,7 +18,7 @@ type RegisterAppPayload struct {
 	ClientID       string `json:"client_id" binding:"required"`
 	ClientSecret   string `json:"client_secret" binding:"required,gte=8"`
 	LaunchURL      string `json:"launch_url"`
-	LogoutNotifURL string `json:"logout_notification_url"`
+	LogoutNotifURL string `json:"logout_notification_url" binding:"required"`
 }
 
 type UpdateAppPayload struct {

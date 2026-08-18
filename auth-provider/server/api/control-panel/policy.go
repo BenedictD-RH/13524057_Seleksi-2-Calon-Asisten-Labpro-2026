@@ -1,6 +1,7 @@
 package controlpanel
 
 import (
+	eventpublisher "auth-provider-server/api/event-publisher"
 	"auth-provider-server/api/models"
 	"net/http"
 	"reflect"
@@ -82,7 +83,7 @@ func AddAppGroupPolicyRequest(c *gin.Context, db *gorm.DB) {
 	})
 }
 
-func RemoveAppGroupPolicyRequest(c *gin.Context, db *gorm.DB) {
+func RemoveAppGroupPolicyRequest(c *gin.Context, db, mq *gorm.DB) {
 	var appGroupPayload AppGroupPayload
 
 	if err := c.ShouldBindJSON(&appGroupPayload); err != nil {
@@ -93,6 +94,8 @@ func RemoveAppGroupPolicyRequest(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
+	OnPolicyRemoved(appGroupPayload.AppId, appGroupPayload.GroupId, db, mq)
+
 	db.Where("application_id = ? AND group_id = ?", appGroupPayload.AppId, appGroupPayload.GroupId).Delete(&models.ApplicationGroupPolicy{})
 
 	c.JSON(http.StatusOK, gin.H{
@@ -101,7 +104,7 @@ func RemoveAppGroupPolicyRequest(c *gin.Context, db *gorm.DB) {
 	})
 }
 
-func UpdateAppGroupPolicyRequest(c *gin.Context, db *gorm.DB) {
+func UpdateAppGroupPolicyRequest(c *gin.Context, db, mq *gorm.DB) {
 	var appGroupPayload AppGroupPayload
 
 	if err := c.ShouldBindJSON(&appGroupPayload); err != nil {
@@ -110,6 +113,10 @@ func UpdateAppGroupPolicyRequest(c *gin.Context, db *gorm.DB) {
 			"message": "Failed to update policy: " + err.Error(),
 		})
 		return
+	}
+
+	if appGroupPayload.Effect == "Blocked" {
+		OnPolicyUpdateToBlocked(appGroupPayload.AppId, appGroupPayload.GroupId, db, mq)
 	}
 
 	db.Model(&models.ApplicationGroupPolicy{}).
@@ -238,4 +245,83 @@ func GetAppPoliciesFieldFromGroupRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"fields": fieldNames,
 	})
+}
+
+
+func OnPolicyUpdateToBlocked(app_id, group_id datatypes.BinUUID, db, mq *gorm.DB) {
+	var groups []models.Group
+
+	var policies []models.ApplicationGroupPolicy
+
+	db.Model(&models.ApplicationGroupPolicy{}).
+	   Where("application_id = ? AND group_id = ?", app_id, group_id).
+	   Find(&policies)
+
+	if len(policies) != 1 {
+		return
+	}
+
+	if policies[0].Effect == "Blocked" {
+		return
+	}
+
+	db.Model(&models.Group{}).Where("id = ?", policies[0].GroupId).Find(&groups)
+
+	if len(groups) != 1 {
+		return
+	}
+
+	var users []models.User
+
+	user_ids := db.Model(&models.UserGroup{}).Where("group_id = ?", groups[0].ID)
+
+	db.Model(&models.User{}).Where("id IN (?)", user_ids).Find(&users)
+
+	for i := 0; i < len(users); i++ {
+		if (users[i].IsAuthorized(policies[0].ApplicationId, db)) {
+			cs_id := users[i].GetLatestActiveSession(db)
+			if (cs_id != nil) {
+				eventpublisher.PublishEvent(users[i].ID, cs_id, &policies[0].ApplicationId, "AccessPolicyChanged", "policy_updated", mq)
+			}
+		}
+	}
+}
+
+func OnPolicyRemoved(app_id, group_id datatypes.BinUUID, db, mq *gorm.DB) {
+	var groups []models.Group
+
+	var policies []models.ApplicationGroupPolicy
+
+	db.Model(&models.ApplicationGroupPolicy{}).
+	   Where("application_id = ? AND group_id = ?", app_id, group_id).
+	   Find(&policies)
+
+	if len(policies) != 1 {
+		return
+	}
+
+	if policies[0].Effect == "Allowed" {
+		return
+	}
+
+	db.Model(&models.Group{}).Where("id = ?", policies[0].GroupId).Find(&groups)
+
+	if len(groups) != 1 {
+		return
+	}
+
+	var users []models.User
+
+	user_ids := db.Model(&models.UserGroup{}).Where("group_id = ?", groups[0].ID)
+
+	db.Model(&models.User{}).Where("id IN (?)", user_ids).Find(&users)
+
+	for i := 0; i < len(users); i++ {
+		if (users[i].IsAuthorized(policies[0].ApplicationId, db)) {
+			cs_id := users[i].GetLatestActiveSession(db)
+			if (cs_id != nil) {
+				eventpublisher.PublishEvent(users[i].ID, cs_id, &policies[0].ApplicationId, "AccessPolicyChanged", "policy_removed", mq)
+			}
+		}
+	}
 }

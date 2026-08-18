@@ -1,6 +1,7 @@
 package controlpanel
 
 import (
+	eventpublisher "auth-provider-server/api/event-publisher"
 	"auth-provider-server/api/models"
 	"net/http"
 	"reflect"
@@ -143,10 +144,10 @@ func UpdateGroupRequest(c *gin.Context, db *gorm.DB) {
 	})
 }
 
-func DeleteGroupRequest(c *gin.Context, db *gorm.DB) {
-	var userPKey PKeyPayload
+func DeleteGroupRequest(c *gin.Context, db *gorm.DB, mq *gorm.DB) {
+	var groupPKey PKeyPayload
 
-	if err := c.ShouldBindJSON(&userPKey); err != nil {
+	if err := c.ShouldBindJSON(&groupPKey); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to delete group: " + err.Error(),
@@ -154,8 +155,10 @@ func DeleteGroupRequest(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	userModel := userPKey.GetGroupModel()
-	if err := db.Delete(&userModel).Error; err != nil {
+	OnGroupDelete(groupPKey.Id, db, mq)
+
+	groupModel := groupPKey.GetGroupModel()
+	if err := db.Delete(&groupModel).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to delete group: " + err.Error(),
@@ -167,4 +170,34 @@ func DeleteGroupRequest(c *gin.Context, db *gorm.DB) {
 		"status":  "success",
 		"message": "Group successfully deleted",
 	})
+}
+
+func OnGroupDelete(group_id datatypes.BinUUID, db, mq *gorm.DB) {
+	var appPKeys []PKeyPayload
+
+	user_ids := db.Model(&models.UserGroup{}).
+					Select("user_id AS id").
+					Where("group_id = ?", group_id)
+		
+	db.Model(&models.ApplicationGroupPolicy{}).
+	   Select("application_id AS id").
+	   Where("group_id = ? AND effect = ?", group_id, "Allow").
+	   Find(&appPKeys)
+
+	var users []models.User
+	db.Model(&models.User{}).
+	   Where("id IN (?)", user_ids).
+	   Find(&users)
+
+	
+	for i := 0; i < len(users); i++ {
+		for j := 0; j < len(appPKeys); j++ {
+			if (users[i].AuthorizedGroupCount(appPKeys[j].Id, db) == 1) {
+				cs_id := users[i].GetLatestActiveSession(db)
+				if (cs_id != nil) {
+					eventpublisher.PublishEvent(users[i].ID, cs_id, &appPKeys[j].Id, "AccessPolicyChanged", "group_deleted", mq)
+				}
+			}
+		}
+	}
 }

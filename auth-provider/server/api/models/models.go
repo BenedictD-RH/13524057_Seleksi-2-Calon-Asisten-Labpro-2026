@@ -21,6 +21,30 @@ func (u User) IsActive() bool {
 	return u.Status == "Active"
 }
 
+func (u User) AuthorizedGroupCount(app_id datatypes.BinUUID, db *gorm.DB) int {
+	groups := db.Model(&ApplicationGroupPolicy{}).Select("group_id").Where("application_id = ?", app_id)
+
+	var userGroup []UserGroup
+	db.Model(&UserGroup{}).Where("user_id = ? AND group_id IN (?)", u.ID, groups).Find(&userGroup)
+
+	return len(userGroup)
+}
+
+func (u User) IsAuthorized(app_id datatypes.BinUUID, db *gorm.DB) bool {
+	return u.AuthorizedGroupCount(app_id, db) > 0
+}
+
+func (u User) GetLatestActiveSession(db *gorm.DB) *datatypes.BinUUID {
+	var sessions []SSOSession
+	db.Model(&SSOSession{}).Where("user_id = ? AND status = ?", u.ID, "Active").Find(&sessions)
+
+	if len(sessions) <= 0 {
+		return nil
+	}
+
+	return &(sessions[0].ID)
+}
+
 type Group struct {
 	ID          datatypes.BinUUID `json:"id" gorm:"default:UUID_TO_BIN(UUID())"`
 	Name        string            `json:"name"`

@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -23,21 +22,23 @@ type LoginPayload struct {
 const session_exp_duration time.Duration = 24 * time.Hour
 
 func UnauthorizedResponse(c *gin.Context) {
+	newUUID, _ := uuid.NewRandom()
 	c.JSON(http.StatusUnauthorized, gin.H{
 		"error": gin.H{
 			"code":      "INVALID_GRANT",
 			"message":   "Authorization request is invalid",
-			"requestId": requestid.Get(c),
+			"requestId": newUUID.String(),
 		},
 	})
 }
 
 func InternalServerResponse(c *gin.Context) {
+	newUUID, _ := uuid.NewRandom()
 	c.JSON(http.StatusUnauthorized, gin.H{
 		"error": gin.H{
 			"code":      "SERVER_ERROR",
 			"message":   "Authorization request failed due to a server error",
-			"requestId": requestid.Get(c),
+			"requestId": newUUID.String(),
 		},
 	})
 }
@@ -93,6 +94,7 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 		fmt.Println("Wrong password")
 		return
 	}
+
 	session, session_token, err := GenerateSession(users[0])
 	if err != nil {
 		InternalServerResponse(c)
@@ -106,5 +108,4 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 
 	c.SetCookie("ssid", session_token, int(session_exp_duration.Seconds()), "/", "", false, true)
 	AuthResponse(c, db, &session)
-
 }

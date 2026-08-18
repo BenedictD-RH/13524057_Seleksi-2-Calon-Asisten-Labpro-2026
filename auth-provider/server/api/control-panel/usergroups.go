@@ -1,6 +1,7 @@
 package controlpanel
 
 import (
+	eventpublisher "auth-provider-server/api/event-publisher"
 	"auth-provider-server/api/models"
 	"net/http"
 	"reflect"
@@ -78,7 +79,7 @@ func AddUserToGroup(c *gin.Context, db *gorm.DB) {
 	})
 }
 
-func RemoveUserFromGroup(c *gin.Context, db *gorm.DB) {
+func RemoveUserFromGroup(c *gin.Context, db, mq *gorm.DB) {
 	var userGroupPayload UserGroupPayload
 
 	if err := c.ShouldBindJSON(&userGroupPayload); err != nil {
@@ -88,6 +89,8 @@ func RemoveUserFromGroup(c *gin.Context, db *gorm.DB) {
 		})
 		return
 	}
+
+	OnUserGroupRemove(userGroupPayload.UserId, userGroupPayload.GroupId, db, mq)
 
 	db.Where("user_id = ? AND group_id = ?", userGroupPayload.UserId, userGroupPayload.GroupId).Delete(&models.UserGroup{})
 
@@ -213,4 +216,25 @@ func GetGroupsFromUserFieldsRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"fields" : fieldNames,
 	})
+}
+
+
+func OnUserGroupRemove(user_id, group_id datatypes.BinUUID, db, mq *gorm.DB) {
+	user := models.User{ID: user_id}
+	var appsGroupIsAllowed []models.Application
+
+	apps_id := db.Model(&models.ApplicationGroupPolicy{}).
+	              Select("application_id").
+				  Where("group_id = ? AND effect = ?", group_id, "Allow")
+	
+	db.Model(&models.Application{}).Where("id IN (?)", apps_id).Find(&appsGroupIsAllowed)
+
+	for i := 0; i < len(appsGroupIsAllowed); i++ {
+		if (user.AuthorizedGroupCount(appsGroupIsAllowed[0].ID, db) == 1) {
+			cs_id := user.GetLatestActiveSession(db)
+			if cs_id != nil {
+				eventpublisher.PublishEvent(user.ID, cs_id, &appsGroupIsAllowed[0].ID, "AccessPolicyChanged", "user_removed_from_group", mq)
+			}
+		}
+	}
 }
