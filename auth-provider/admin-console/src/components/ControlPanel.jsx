@@ -78,8 +78,8 @@ function formatEntryData(entry, dataKey) {
 // 1 == Optional
 // 2 == Required
 function getRequirementCategory(fieldKey) {
-    const required = ['Name', 'Email', 'PasswordHash', 'ClientId', 'ClientSecretHash', 'RedirectUri']
-    const optional = ['Description', 'LaunchUrl', 'LogoutNotificationUrl']
+    const required = ['Name', 'Email', 'PasswordHash', 'ClientId', 'ClientSecretHash', 'RedirectUri', 'LogoutNotificationUrl']
+    const optional = ['Description', 'LaunchUrl']
     for (const key of required) {
         if (fieldKey == key) return 2
     }
