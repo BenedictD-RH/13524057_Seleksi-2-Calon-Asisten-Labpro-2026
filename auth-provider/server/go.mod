@@ -4,7 +4,6 @@ go 1.25.0
 
 require (
 	github.com/gin-contrib/cors v1.7.7
-	github.com/gin-contrib/requestid v1.0.6
 	github.com/gin-gonic/gin v1.12.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
