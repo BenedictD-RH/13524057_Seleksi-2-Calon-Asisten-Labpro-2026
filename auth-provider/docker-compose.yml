@@ -1,11 +1,4 @@
-services:
-  # auth-provider-server:
-  #   build: ./server
-  #   ports:
-  #     - "8080:8080"
-  #   env_file:
-  #     - ./.env
-  
+services:  
   auth-provider-db:
     image: mysql:8.0
     container_name: auth-provider-db
@@ -16,9 +9,28 @@ services:
     ports:
       - "5342:3306"
     volumes:
-      - ./primary-db:/docker-entrypoint-initdb.d
+      - ./primary-db/init:/docker-entrypoint-initdb.d
       - auth-provider-db_data:/var/lib/mysql
 
+  message-queue:
+    image: mysql:8.0
+    container_name: message-queue
+    restart: always
+    environment:
+      MYSQL_DATABASE: queue
+      MYSQL_ROOT_PASSWORD: ${MESSAGE_QUEUE_DB_PASS}
+    ports:
+      - "5343:3306"
+    volumes:
+      - ./message-queue/init:/docker-entrypoint-initdb.d
+      - message-queue_data:/var/lib/mysql
+  # auth-provider-server:
+  #   build: ./server
+  #   ports:
+  #     - "8080:8080"
+  #   env_file:
+  #     - ./.env
 
 volumes:
   auth-provider-db_data:
+  message-queue_data:
