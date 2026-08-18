@@ -53,5 +53,9 @@ func main() {
     app.GetUserDataRequest(c, db)
   })
 
+  r.POST("/logout", func(c *gin.Context) {
+    auth.LogoutRequest(c, db)
+  })
+
   r.Run(":8691")
 }
