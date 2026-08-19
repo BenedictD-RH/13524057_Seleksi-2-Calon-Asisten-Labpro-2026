@@ -3,7 +3,6 @@ package centralsessionserver
 import (
 	"auth-provider-server/api/models"
 	"auth-provider-server/api/utility"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -21,12 +20,12 @@ type LoginPayload struct {
 
 const session_exp_duration time.Duration = 24 * time.Hour
 
-func UnauthorizedResponse(c *gin.Context) {
+func UnauthorizedLoginResponse(c *gin.Context, message string) {
 	newUUID, _ := uuid.NewRandom()
 	c.JSON(http.StatusUnauthorized, gin.H{
 		"error": gin.H{
-			"code":      "INVALID_GRANT",
-			"message":   "Authorization request is invalid",
+			"code":      "LOGIN_FAILED",
+			"message":   message,
 			"requestId": newUUID.String(),
 		},
 	})
@@ -34,7 +33,7 @@ func UnauthorizedResponse(c *gin.Context) {
 
 func InternalServerResponse(c *gin.Context) {
 	newUUID, _ := uuid.NewRandom()
-	c.JSON(http.StatusUnauthorized, gin.H{
+	c.JSON(http.StatusInternalServerError, gin.H{
 		"error": gin.H{
 			"code":      "SERVER_ERROR",
 			"message":   "Authorization request failed due to a server error",
@@ -52,10 +51,7 @@ func GenerateSession(user models.User) (models.SSOSession, string, error) {
 	if err != nil {
 		return models.SSOSession{}, "", err
 	}
-	token_hash, err := utility.HashPassword(session_token)
-	if err != nil {
-		return models.SSOSession{}, "", err
-	}
+	token_hash := utility.HashToken(session_token)
 	return models.SSOSession{
 		ID:               datatypes.BinUUID(newUUID),
 		UserId:           user.ID,
@@ -70,28 +66,24 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 	var loginPayload LoginPayload
 
 	if err := c.ShouldBindJSON(&loginPayload); err != nil {
-		UnauthorizedResponse(c)
-		fmt.Println("Payload missing")
+		UnauthorizedLoginResponse(c, "Invalid login form!")
 		return
 	}
 	var users []models.User
 	db.Where("email = ?", loginPayload.Email).Find(&users)
 
 	if len(users) <= 0 {
-		UnauthorizedResponse(c)
-		fmt.Println("User not found")
+		UnauthorizedLoginResponse(c, "Wrong username or password!")
 		return
 	}
 
 	if !users[0].IsActive() {
-		UnauthorizedResponse(c)
-		fmt.Println("User not active")
+		UnauthorizedLoginResponse(c, "User account is inactive!")
 		return
 	}
 
 	if !utility.CheckPasswordHash(loginPayload.Password, users[0].PasswordHash) {
-		UnauthorizedResponse(c)
-		fmt.Println("Wrong password")
+		UnauthorizedLoginResponse(c, "Wrong username or password!")
 		return
 	}
 
@@ -105,6 +97,10 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 		InternalServerResponse(c)
 		return
 	}
+
+	db.Model(&models.SSOSession{}).
+	   Where("user_id = ? AND id != ? AND status = ?", users[0].ID, session.ID, "Active").
+	   Updates(models.SSOSession{Status: "Revoked", RevokedReason: "new_session_created"})
 
 	c.SetCookie("ssid", session_token, int(session_exp_duration.Seconds()), "/", "", false, true)
 	AuthResponse(c, db, &session)

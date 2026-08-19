@@ -15,7 +15,7 @@ import (
 func LogoutRequest(c *gin.Context, db, mq *gorm.DB) {
 	session_token, err := c.Cookie("ssid")
 	if err != nil {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "No session found")
 		return
 	}
 

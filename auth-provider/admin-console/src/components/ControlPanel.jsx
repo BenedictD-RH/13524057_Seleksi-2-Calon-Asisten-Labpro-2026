@@ -14,6 +14,13 @@ function isUpdatableInSubsection(fieldKey, subsection_path) {
     return false
 }
 
+function updateFieldKey(dataKey) {
+    if (dataKey.substring(dataKey.length - 5, dataKey.length).toLowerCase() == '_hash') {
+        return dataKey.substring(0, dataKey.length - 5)
+    }
+    return dataKey
+}
+
 function isUpdatableField(fieldKey, subsection_path) {
     if (fieldKey.substring(fieldKey.length - 2, fieldKey.length).toLowerCase() == 'id' && fieldKey != "client_id") {
         return false
@@ -26,6 +33,13 @@ function isUpdatableField(fieldKey, subsection_path) {
 }
 
 function getIDField(path) {
+    return path.substring(1, path.length - 1) + "_id"
+}
+
+function getPayloadIDField(path) {
+    if (path = "/apps") {
+        return "application_id"
+    }
     return path.substring(1, path.length - 1) + "_id"
 }
 
@@ -150,17 +164,23 @@ function DataContainer({entry, dataKey, remount, subsection_path = "", subsectio
         if (event.key != 'Enter') return
         const id = entry['id']
         const path = window.location.pathname
+        console.log((subsection_path == "" ? JSON.stringify({"id": entry['id'], [updateFieldKey(dataKey)]: inputValue}) : 
+                                           JSON.stringify({
+                                                [getIDField(path)] : subsection_uuid,
+                                                [getIDField(subsection_path)] : entry[getPayloadIDField(subsection_path)],
+                                                [updateFieldKey(dataKey)]: inputValue
+                                            })))
         fetch('/server' + path + subsection_path, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: (subsection_path == "" ? JSON.stringify({"id": entry['id'], [dataKey]: inputValue}) : 
+            body: (subsection_path == "" ? JSON.stringify({"id": entry['id'], [updateFieldKey(dataKey)]: inputValue}) : 
                                            JSON.stringify({
                                                 [getIDField(path)] : subsection_uuid,
-                                                [getIDField(subsection_path)] : entry[getIDField(subsection_path)],
-                                                [dataKey]: inputValue
+                                                [getIDField(subsection_path)] : entry[getPayloadIDField(subsection_path)],
+                                                [updateFieldKey(dataKey)]: inputValue
                                             })),
                 })
         .then((res) => {

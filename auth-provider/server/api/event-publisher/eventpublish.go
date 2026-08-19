@@ -30,7 +30,8 @@ type Event struct {
 	ApplicationId *datatypes.BinUUID `json:"application_id"`
 	Payload datatypes.JSON
 	Status string
-	PublishedAt time.Time
+	CreatedAt time.Time
+	PublishedAt *time.Time
 }
 
 
@@ -51,7 +52,8 @@ func PublishEvent(user_id datatypes.BinUUID, cs_id, app_id *datatypes.BinUUID, e
 	}
 
 	jsonData, _ := json.Marshal(eventPayload)
-
+	
+	t := time.Now()
 	eventModel := Event{
 		ID: datatypes.BinUUID(newUUID),
 		EventType: eventType,
@@ -60,7 +62,8 @@ func PublishEvent(user_id datatypes.BinUUID, cs_id, app_id *datatypes.BinUUID, e
 		ApplicationId: app_id,
 		Payload: jsonData,
 		Status: "Published",
-		PublishedAt: time.Now(),
+		CreatedAt: time.Now(),
+		PublishedAt: &t,
 	}
 
 	mq.Create(&eventModel)

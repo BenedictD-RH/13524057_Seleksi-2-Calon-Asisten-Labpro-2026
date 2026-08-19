@@ -29,11 +29,7 @@ func GenerateAuthCode(code_challenge, redirect_uri string, session models.SSOSes
 		InternalServerResponse(c)
 		return nil, ""
 	}
-	code_hash, err := utility.HashPassword(auth_code)
-	if err != nil {
-		InternalServerResponse(c)
-		return nil, ""
-	}
+	code_hash := utility.HashToken(auth_code)
 
 	return &models.AuthorizationCode{
 		ID:            datatypes.BinUUID(newUUID),
@@ -46,6 +42,17 @@ func GenerateAuthCode(code_challenge, redirect_uri string, session models.SSOSes
 		CreatedAt:     time.Now(),
 		ExpiresAt:     time.Now().Add(auth_code_expr_duration),
 	}, auth_code
+}
+
+func UnauthorizedResponse(c *gin.Context, msg string) {
+	newUUID, _ := uuid.NewRandom()
+	c.JSON(http.StatusUnauthorized, gin.H{
+		"error": gin.H{
+			"code":      "INVALID_GRANT",
+			"message":   msg,
+			"requestId": newUUID.String(),
+		},
+	})
 }
 
 func AuthorizeRequest(c *gin.Context, db *gorm.DB) {
@@ -68,6 +75,40 @@ func AuthorizeRequest(c *gin.Context, db *gorm.DB) {
 	}
 	session := &sessions[0]
 	session.MarkActivity(db)
+
+	client_id := c.Query("client_id")
+	redirect_uri := c.Query("redirect_uri")
+	code_challenge := c.Query("code_challenge")
+	state := c.Query("state")
+	if state == "" || client_id == "" || redirect_uri == "" || code_challenge == "" {
+		UnauthorizedResponse(c, "Missing query parameters")
+		return
+	}
+	auth_portal_uri := os.Getenv("AUTH_PORTAL_URI")
+
+	c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s/session?client_id=%s&redirect_uri=%s&state=%s&code_challenge=%s",
+		auth_portal_uri, client_id, redirect_uri, state, code_challenge))
+}
+
+func PickSessionRequest(c *gin.Context, db *gorm.DB) {
+	session_token, err := c.Cookie("ssid")
+	if err != nil {
+		RedirectToLoginPage(c)
+		fmt.Println(err)
+		return
+	}
+	var sessions []models.SSOSession
+	db.Where("status = ? AND session_token_hash = ?", "Active", utility.HashToken(session_token)).Find(&sessions)
+	if len(sessions) != 1 {
+		RedirectToLoginPage(c)
+		return
+	}
+	sessions[0].UpdateStatus(db)
+	if (!sessions[0].IsValid()) {
+		RedirectToLoginPage(c)
+		return
+	}
+	session := &sessions[0]
 	AuthResponse(c, db, session)
 }
 
@@ -77,33 +118,43 @@ func AuthResponse(c *gin.Context, db *gorm.DB, session *models.SSOSession) {
 	code_challenge := c.Query("code_challenge")
 	state := c.Query("state")
 	if state == "" || client_id == "" || redirect_uri == "" || code_challenge == "" {
-		fmt.Println("Missing parameters")
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Missing query parameters")
 		return
 	}
 
 	var apps []models.Application
 	db.Where("client_id = ?", client_id).Find(&apps)
 	if len(apps) <= 0 {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Invalid Client ID")
+		return
+	}
+
+	if (apps[0].Status != "Active") {
+		UnauthorizedResponse(c, "Application is not active")
 		return
 	}
 
 	var redirect_uris []models.ApplicationRedirectURI
 	db.Where("redirect_uri = ? AND application_id = ?", redirect_uri, apps[0].ID).Find(&redirect_uris)
 	if len(redirect_uris) <= 0 {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Redirect URI not registered")
 		return
 	}
 
 	user := models.User{ID: session.UserId}
 	if (!user.IsAuthorized(apps[0].ID, db)) {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Policy Denied")
 		return
 	}
 
-	auth_code_model, auth_code := GenerateAuthCode(code_challenge, client_id, *session, apps[0], c, db)
+	if (!session.IsValid()) {
+		UnauthorizedResponse(c, "Invalid session")
+		return
+	}
+
+	auth_code_model, auth_code := GenerateAuthCode(code_challenge, redirect_uri, *session, apps[0], c, db)
 	if auth_code_model == nil && auth_code == "" {
+		UnauthorizedResponse(c, "Invalid Authorization Code")
 		return
 	}
 
@@ -120,12 +171,11 @@ func RedirectToLoginPage(c *gin.Context) {
 	code_challenge := c.Query("code_challenge")
 	state := c.Query("state")
 	if state == "" || client_id == "" || redirect_uri == "" || code_challenge == "" {
-		fmt.Println("Missing parameters")
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Missing query parameters")
 		return
 	}
 	auth_portal_uri := os.Getenv("AUTH_PORTAL_URI")
 
-	c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&state=%s&code_challenge=%s",
+	c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s/login?client_id=%s&redirect_uri=%s&state=%s&code_challenge=%s",
 		auth_portal_uri, client_id, redirect_uri, state, code_challenge))
 }

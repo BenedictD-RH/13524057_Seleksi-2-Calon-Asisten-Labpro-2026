@@ -147,15 +147,16 @@ func UpdateUserRequest(c *gin.Context, db, mq *gorm.DB) {
 		})
 		return
 	}
-
+	
 	if (userPayload.Status == "Inactive") {
 		OnSetUserInactiveUpdate(userPayload.Id, db, mq)
 	}
-	if (userPayload.Password != "") {
-		OnUserPasswordChangeUpdate(userPayload.Id, db, mq)
-	}
+	
 
 	userQuery, updatedUserModel, err := userPayload.GetDBStruct()
+	if (updatedUserModel.PasswordHash != "") {
+		OnUserPasswordChangeUpdate(userPayload.Id, db, mq)
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
@@ -213,6 +214,9 @@ func OnUserPasswordChangeUpdate(user_id datatypes.BinUUID, db, mq *gorm.DB) {
 	if cs_id != nil {
 		eventpublisher.PublishEvent(user.ID, cs_id, nil, "PasswordChanged", "user_password_changed", mq)
 	}
+	db.Model(&models.SSOSession{}).
+	   Where("id = ?", cs_id).
+	   Updates(models.SSOSession{Status: "Revoked", RevokedReason: "user_logout"})
 }
 
 func OnSetUserInactiveUpdate(user_id datatypes.BinUUID, db, mq *gorm.DB) {
@@ -221,6 +225,9 @@ func OnSetUserInactiveUpdate(user_id datatypes.BinUUID, db, mq *gorm.DB) {
 	if cs_id != nil {
 		eventpublisher.PublishEvent(user.ID, cs_id, nil, "SessionRevoked", "user_set_inactive", mq)
 	}
+	db.Model(&models.SSOSession{}).
+	   Where("id = ?", cs_id).
+	   Updates(models.SSOSession{Status: "Revoked", RevokedReason: "user_logout"})
 }
 
 func OnDeleteUser(user_id datatypes.BinUUID, db, mq *gorm.DB) {
@@ -229,4 +236,7 @@ func OnDeleteUser(user_id datatypes.BinUUID, db, mq *gorm.DB) {
 	if cs_id != nil {
 		eventpublisher.PublishEvent(user.ID, cs_id, nil, "SessionRevoked", "user_deleted", mq)
 	}
+	db.Model(&models.SSOSession{}).
+	   Where("id = ?", cs_id).
+	   Updates(models.SSOSession{Status: "Revoked", RevokedReason: "user_logout"})
 }

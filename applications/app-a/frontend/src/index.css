@@ -27,15 +27,17 @@ body {
 
 .pagebody {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
   flex-grow: 1;
 
 }
 
 .loginbutton {
+  align-self: center;
   font-size: 2vw;
   font-weight: bold;
+  margin-top: 35vh;
+  margin-bottom: 10vh;
   font-family: Dosis;
   width: 20%;
   height: 10%;
@@ -46,4 +48,12 @@ body {
   font-weight: bold;
   color: white;
   font-family: Dosis;
+}
+
+.unauthorizedMsg {
+  font-size: 3vh;
+  font-family: Dosis;
+  color: crimson;
+  background-color: white;
+  padding: 1vh 1vw 1vh 1vw;
 }

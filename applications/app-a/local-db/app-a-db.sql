@@ -2,9 +2,7 @@ CREATE TABLE code_verifiers(
     id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
     state VARCHAR(32) NOT NULL UNIQUE,
     code_verifier VARCHAR(64) NOT NULL UNIQUE,
-    status ENUM('Active', 'Expired') NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    expires_at DATETIME NOT NULL
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE profile_cache(

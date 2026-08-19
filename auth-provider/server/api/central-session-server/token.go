@@ -52,43 +52,44 @@ func TokenRequest(c *gin.Context, db *gorm.DB) {
 	var tokenPayload TokenRequestPayload
 
 	if err := c.ShouldBindJSON(&tokenPayload); err != nil {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Invalid token request")
 		return
 	}
 
 	var auth_codes []models.AuthorizationCode
 	db.Where("code_hash = ?", utility.HashToken(tokenPayload.Code)).Find(&auth_codes)
 	if len(auth_codes) != 1 {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Invalid Authorization code")
 		return
 	}
+	
 
 	if (!auth_codes[0].IsValid()) {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Invalid Authorization code")
 		return
 	}
 
 	if (auth_codes[0].RedirectUri != tokenPayload.RedirectURI) {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Redirect URI mismatch")
 		return
 	}
 
 	auth_code := &auth_codes[0]
 	if !utility.CheckPasswordHash(tokenPayload.CodeVerifier, auth_code.CodeChallenge) {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Invalid Authorization code")
 		return
 	}
 	var app models.Application
 	var apps []models.Application
 	db.Where("id = ?", auth_code.ApplicationId).Find(&apps)
 	if len(apps) <= 0 {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "App not found")
 		return
 	}
 	app = apps[0]
 
 	if !utility.CheckPasswordHash(tokenPayload.ClientSecret, app.ClientSecretHash) {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Invalid client secret")
 		return
 	}
 

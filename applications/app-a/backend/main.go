@@ -35,7 +35,16 @@ func main() {
   } 
 
   r := gin.Default()
-  r.Use(cors.Default())
+  r.Use(cors.New(cors.Config{
+		AllowOrigins: []string{os.Getenv("AUTH_SERVER_URL"),
+			"http://localhost:8081",
+		},
+		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		AllowCredentials: true,
+	}))
+	r.RedirectTrailingSlash = false
+	r.RedirectFixedPath = false
 
   r.GET("/login", func(c *gin.Context) {
     auth.LoginRequest(c, db)
@@ -55,6 +64,10 @@ func main() {
 
   r.POST("/logout", func(c *gin.Context) {
     auth.LogoutRequest(c, db)
+  })
+
+  r.POST("/internal/logout", func(c *gin.Context) {
+    auth.BackChannelLogoutRequest(c, db)
   })
 
   r.Run(":8691")

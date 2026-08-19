@@ -12,7 +12,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -41,10 +40,7 @@ func CreateLocalSession(user_info UserInfoPayload) (*models.LocalSession, string
 	if err != nil {
 		return nil, ""
 	}
-	session_token_hash, err := utility.HashPassword(session_token)
-	if err != nil {
-		return nil, ""
-	}
+	session_token_hash := utility.HashToken(session_token)
 
 	return &models.LocalSession{
 		ID:               datatypes.BinUUID(newUUID),
@@ -85,22 +81,24 @@ func CreateUpdatedProfileCache(user_info UserInfoPayload) *models.ProfileCache {
 	}
 }
 
-func UnauthorizedResponse(c *gin.Context) {
+func UnauthorizedResponse(c *gin.Context, msg string) {
+	newUUID, _:= uuid.NewRandom()
 	c.JSON(http.StatusUnauthorized, gin.H{
 		"error": gin.H{
-			"code":      "INVALID_GRANT",
-			"message":   "Authorization request is invalid",
-			"requestId": requestid.Get(c),
+			"code":     "INVALID_GRANT",
+			"message":   msg,
+			"requestId": newUUID.String(),
 		},
 	})
 }
 
 func InternalServerErrorResponse(c *gin.Context) {
+	newUUID, _:= uuid.NewRandom()
 	c.JSON(http.StatusUnauthorized, gin.H{
 		"error": gin.H{
 			"code":      "SERVER_ERROR",
 			"message":   "Authorization request failed due to a server error",
-			"requestId": requestid.Get(c),
+			"requestId": newUUID.String(),
 		},
 	})
 }
@@ -109,7 +107,7 @@ func AuthCallbackRequest(c *gin.Context, db *gorm.DB) {
 	code := c.Query("code")
 	state := c.Query("state")
 	if code == "" || state == "" {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Code or State not found! Please retry login!")
 		return
 	}
 	auth_server_url := os.Getenv("AUTH_SERVER_URL")
@@ -125,19 +123,14 @@ func AuthCallbackRequest(c *gin.Context, db *gorm.DB) {
 	db.Where("state = ?", state).Find(&codeVerifierModels)
 
 	if len(codeVerifierModels) != 1 {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Code verifier not found! Please retry login!")
 		return
 	}
-
-	if !codeVerifierModels[0].IsValid() {
-		UnauthorizedResponse(c)
-		return
-	}
-
+	
 	payload := map[string]string{"code": code,
 		"code_verifier": codeVerifierModels[0].CodeVerifier,
 		"client_secret": client_secret,
-		"redirect_uri": "https://" + c.Request.Host + c.FullPath()}
+		"redirect_uri": "http://" + c.Request.Host + c.FullPath()}
 	jsonData, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/token", auth_server_url), bytes.NewReader(jsonData))
 
@@ -213,6 +206,7 @@ func AuthCallbackRequest(c *gin.Context, db *gorm.DB) {
 	}
 
 	c.SetCookie("local_ssid", session_token, int(local_session_expr.Seconds()), "/", "", false, true)
-	c.Redirect(http.StatusFound, os.Getenv("FRONTEND_URI"))
-
+	c.JSON(http.StatusOK, gin.H{
+		"redirect" : os.Getenv("FRONTEND_URI"),
+	})
 }

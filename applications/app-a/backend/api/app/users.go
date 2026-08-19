@@ -20,7 +20,7 @@ func GetUserDataRequest(c *gin.Context, db *gorm.DB) {
 		return
 	}
 	var sessions []models.LocalSession
-	db.Where("status = ? AND session_token_hash", "Active", utility.HashToken(local_session_token)).Find(&sessions)
+	db.Where("status = ? AND session_token_hash = ?", "Active", utility.HashToken(local_session_token)).Find(&sessions)
 	if len(sessions) != 1 {
 		NoContentResponse(c)
 		return

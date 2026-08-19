@@ -26,7 +26,7 @@ func UserInfoRequest(c *gin.Context, db *gorm.DB) {
 	var tokenPayload AccessTokenPayload
 
 	if err := c.ShouldBindJSON(&tokenPayload); err != nil {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Invalid user info request")
 		return
 	}
 
@@ -34,12 +34,12 @@ func UserInfoRequest(c *gin.Context, db *gorm.DB) {
 	db.Where("status = ?", "Active").Find(&access_tokens)
 	accessTokenModel := FindAccessToken(&access_tokens, tokenPayload.Token)
 	if accessTokenModel == nil {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Invalid access token")
 		return
 	}
 	accessTokenModel.UpdateStatus(db)
 	if !accessTokenModel.IsValid() {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Invalid access token")
 		return
 	}
 
@@ -47,7 +47,7 @@ func UserInfoRequest(c *gin.Context, db *gorm.DB) {
 	var users []models.User
 	db.Where("id = ?", accessTokenModel.UserId).Find(&users)
 	if len(users) <= 0 {
-		UnauthorizedResponse(c)
+		UnauthorizedResponse(c, "Invalid user")
 		return
 	}
 	user = users[0]
@@ -58,5 +58,24 @@ func UserInfoRequest(c *gin.Context, db *gorm.DB) {
 		"name":               user.Name,
 		"email":              user.Email,
 		"groups":             *(user.GetGroupsUUID(db)),
+	})
+}
+
+func GetSessionInfoRequest(c *gin.Context, db *gorm.DB) {
+	session_token, _ := c.Cookie("ssid")
+	var sessions []models.SSOSession
+	db.Where("status = ? AND session_token_hash = ?", "Active", utility.HashToken(session_token)).Find(&sessions)
+	if len(sessions) != 1 {
+		InternalServerResponse(c)
+		return
+	}
+
+	var user models.User
+	db.Model(&models.User{}).Where("id = ?", sessions[0].UserId).First(&user)
+
+	c.JSON(http.StatusOK, gin.H{
+		"session_token": sessions[0].SessionTokenHash,
+		"name":               user.Name,
+		"email":              user.Email,
 	})
 }

@@ -22,7 +22,7 @@ func (u User) IsActive() bool {
 }
 
 func (u User) AuthorizedGroupCount(app_id datatypes.BinUUID, db *gorm.DB) int {
-	groups := db.Model(&ApplicationGroupPolicy{}).Select("group_id").Where("application_id = ?", app_id)
+	groups := db.Model(&ApplicationGroupPolicy{}).Select("group_id").Where("application_id = ? AND effect = ?", app_id, "Allow")
 
 	var userGroup []UserGroup
 	db.Model(&UserGroup{}).Where("user_id = ? AND group_id IN (?)", u.ID, groups).Find(&userGroup)
@@ -31,7 +31,12 @@ func (u User) AuthorizedGroupCount(app_id datatypes.BinUUID, db *gorm.DB) int {
 }
 
 func (u User) IsAuthorized(app_id datatypes.BinUUID, db *gorm.DB) bool {
-	return u.AuthorizedGroupCount(app_id, db) > 0
+	groups := db.Model(&ApplicationGroupPolicy{}).Select("group_id").Where("application_id = ? AND effect = ?", app_id, "Blocked")
+
+	var userGroup []UserGroup
+	db.Model(&UserGroup{}).Where("user_id = ? AND group_id IN (?)", u.ID, groups).Find(&userGroup)
+
+	return (u.AuthorizedGroupCount(app_id, db) > 0) && (len(userGroup) == 0)
 }
 
 func (u User) GetLatestActiveSession(db *gorm.DB) *datatypes.BinUUID {
@@ -80,7 +85,7 @@ type Application struct {
 	ClientId              string            `json:"client_id"`
 	ClientSecretHash      string            `json:"client_secret_hash"`
 	Status                string            `json:"status"`
-	LaunchUrl             string            `json:"redirect_url"`
+	LaunchUrl             string            `json:"launch_url"`
 	LogoutNotificationUrl string            `json:"logout_notification_url"`
 	CreatedAt             time.Time         `json:"created_at"`
 	UpdatedAt             time.Time         `json:"updated_at"`

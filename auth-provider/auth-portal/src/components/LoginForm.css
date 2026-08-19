@@ -39,8 +39,7 @@
 .btncontainer {
     display: flex;
     align-items: center;
-    flex-grow: 1;
-    margin-bottom: 5%;
+    margin-top: 5%;
     text-decoration: none;
 }
 
@@ -48,5 +47,11 @@
     width: 15vw;
     height: 5vh;
     font-size: 2.5vh;
+    font-family: 'Momo Trust Display';
+}
+
+.errorMsg {
+    font-size: 2.5vh;
+    color: crimson;
     font-family: 'Momo Trust Display';
 }

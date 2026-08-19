@@ -34,7 +34,7 @@ func main() {
 	}
 
 	mq_pass := os.Getenv("MESSAGE_QUEUE_DB_PASS")
-	dsn_mq := fmt.Sprintf("root:%s@tcp(localhost:5343)/auth-provider-db?charset=utf8mb4&parseTime=True&loc=Local", mq_pass)
+	dsn_mq := fmt.Sprintf("root:%s@tcp(localhost:5343)/queue?charset=utf8mb4&parseTime=True&loc=Local", mq_pass)
 	mq, db_err := gorm.Open(mysql.Open(dsn_mq), &gorm.Config{})
 	if db_err != nil {
 		fmt.Println(db_err)
@@ -224,6 +224,14 @@ func main() {
 
 	r.POST("/logout", func(c *gin.Context) {
 		centralsessionserver.LogoutRequest(c, db, mq)
+	})
+
+	r.GET("/session", func(c *gin.Context) {
+		centralsessionserver.GetSessionInfoRequest(c, db)
+	})
+
+	r.GET("/session/use", func(c *gin.Context) {
+		centralsessionserver.PickSessionRequest(c, db)
 	})
 
 	r.Run()

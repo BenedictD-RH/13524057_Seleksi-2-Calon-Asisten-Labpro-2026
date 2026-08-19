@@ -1,0 +1,74 @@
+.sessionContainer {
+    background-color: #939393;
+    height: 30%;
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0%;
+    
+}
+
+.sessionHeader {
+    font-size: 4vh;
+    color: white;
+    font-weight: 100;
+    font-family: 'Momo Trust Display';
+    margin: 2%;
+}
+
+.userCred {
+    display: flex;
+    flex-direction: column;
+    align-self: flex-start;
+}
+
+.userName {
+    font-size: 5vh;
+    color: white;
+    font-weight: 100;
+    font-family: 'Momo Trust Display';
+    margin: 0 2% 0 5%;
+    align-self: flex-start;
+}
+
+.userEmail {
+    font-size: 3vh;
+    color: white;
+    font-weight: 100;
+    font-family: 'Momo Trust Display';
+    margin: 0 2% 0 5%;
+    align-self: flex-start;
+}
+
+.sessionChoice {
+    display: flex;
+    flex-direction: row;
+    width: 95%;
+    align-items: center;
+}
+
+.useBtn {
+    height: 3.5vw;
+    width: 3.5vw;
+    margin-left: auto;
+    border-radius: 50%;
+    background-color: darkslategray;
+    font-size: 2vw;
+    text-align: center;
+    color: white;
+    font-weight: 100;
+    font-family: 'Momo Trust Display';
+}
+
+.useBtn:hover {
+    filter: brightness(0.95);
+}
+
+.anotherSessionBtn {
+    margin-top: 1.5%;
+    width: 15vw;
+    height: 4vh;
+    font-size: 2.5vh;
+    font-family: 'Momo Trust Display';
+}

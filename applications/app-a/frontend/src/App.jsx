@@ -9,6 +9,7 @@ const getCookie = (name) => {
 
 function App() {
   const [userData, setUserData] = useState(null)
+  const [unauthorizedMsg, setUnauthorizedMsg] = useState("")
   const handleLogin = () => {
     fetch('/backend/login', {
       redirect: 'manual',
@@ -16,14 +17,23 @@ function App() {
       credentials: 'include'
     })
     .then(response => {
-      if (response.redirected) {
-        console.log('The request was redirected!');
-      }
-      
       console.log('Final URL 1:', response.url); 
       window.location.href = response.url
-    })
-    .catch(err => console.error(err));
+      if (response.redirected) {
+        console.log('The request was redirected!');
+        
+      } else {
+        return response.json()
+      }
+      
+      return null
+    }).then(data => {
+      if (data != null) {
+        setUnauthorizedMsg(data['error']['code'] + " | " + data['error']['message'])
+      }
+    }).catch(err => {
+      console.error(err)
+    });
   }
   
   var pagecontent
@@ -63,6 +73,7 @@ function App() {
         <h1 className="appname">App-A</h1>\
       </div>
       <div className="pagebody">
+        {unauthorizedMsg != "" ? <div className='unauthorizedMsg'>{unauthorizedMsg}</div> : <></>}
         {pagecontent}
       </div>
     </div>

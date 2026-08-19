@@ -62,3 +62,10 @@ type ProfileCache struct {
 func (ProfileCache) TableName() string {
 	return "profile_cache"
 }
+
+type ProcessedEvent struct {
+	EventID datatypes.BinUUID
+	EventType string
+	ProcessedAt time.Time
+	Result string
+}

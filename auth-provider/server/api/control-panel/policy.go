@@ -273,7 +273,7 @@ func OnPolicyUpdateToBlocked(app_id, group_id datatypes.BinUUID, db, mq *gorm.DB
 
 	var users []models.User
 
-	user_ids := db.Model(&models.UserGroup{}).Where("group_id = ?", groups[0].ID)
+	user_ids := db.Model(&models.UserGroup{}).Select("user_id").Where("group_id = ?", groups[0].ID)
 
 	db.Model(&models.User{}).Where("id IN (?)", user_ids).Find(&users)
 
