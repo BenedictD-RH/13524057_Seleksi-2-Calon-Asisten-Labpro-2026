@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import NavBar from './components/NavBar.jsx'
-import ControlPanel from './components/ControlPanel.jsx'
+import NavBar from './components/NavBar'
+import ControlPanel from './components/ControlPanel'
 import './App.css'
 
 function App() {
-  const [pathData, setPathData] = useState([])
+  const [pathData, setPathData] = useState<any[]>([])
   const [remountKey, setRemountKey] = useState(0)
   const remountData = () => {
     setRemountKey(remountKey + 1)

@@ -1,19 +1,16 @@
 import { useEffect, useState } from 'react'
 
-const getCookie = (name) => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return null;
-};
+interface UserData {
+  name: string
+  [key: string]: any
+}
 
 function App() {
-  const [userData, setUserData] = useState(null)
+  const [userData, setUserData] = useState<UserData | null>(null)
   const [unauthorizedMsg, setUnauthorizedMsg] = useState("")
   const handleLogin = () => {
     fetch('/backend/login', {
       redirect: 'manual',
-      origin: 'https://localhost:8692',
       credentials: 'include'
     })
     .then(response => {
@@ -47,7 +44,6 @@ function App() {
     fetch('/backend/users', {
       method: 'GET',
       redirect: 'manual',
-      origin: 'https://localhost:8692',
       credentials: 'include'
     }).then((res) => {
       if (res.ok) {

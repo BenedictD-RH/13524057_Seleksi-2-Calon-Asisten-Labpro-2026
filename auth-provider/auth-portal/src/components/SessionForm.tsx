@@ -1,9 +1,14 @@
 import "./SessionForm.css"
 import { useState, useEffect } from 'react'
 
+interface SessionData {
+    name: string
+    email: string
+    [key: string]: any
+}
 
 function SessionForm() {
-    const [sessionData, setSessionData] = useState(null)
+    const [sessionData, setSessionData] = useState<SessionData | null>(null)
 
     const handleExistingSession = () => {
         fetch('/server/session/use?' + new URLSearchParams(window.location.search) , {
@@ -11,7 +16,6 @@ function SessionForm() {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            origin: 'http://localhost:8081',
             credentials: 'include',
             redirect: 'follow'
         }).then(response => {
@@ -30,7 +34,6 @@ function SessionForm() {
     useEffect(() => {
         fetch('/server/session', {
             method: 'GET',
-            origin: 'http://localhost:8081',
             credentials: 'include'
         }).then(response => {
             if (response.ok) {

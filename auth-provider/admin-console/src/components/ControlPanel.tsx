@@ -1,27 +1,33 @@
 import './ControlPanel.css'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { stringify } from 'uuid';
 
-function isUpdatableInSubsection(fieldKey, subsection_path) {
-    var updatableFields = []
+type Entry = Record<string, any>
+
+interface FieldsResponse {
+    fields: string[]
+}
+
+function isUpdatableInSubsection(fieldKey: string, subsection_path: string): boolean {
+    var updatableFields: string[] = []
     const path = window.location.pathname + subsection_path
     if ((path == "/apps/groups") || (path == "/groups/apps")) {
         updatableFields = ['effect']
     }
     for (const key of updatableFields) {
-        if (fieldKey == updatableFields) return true
+        if (fieldKey == key) return true
     }
     return false
 }
 
-function updateFieldKey(dataKey) {
+function updateFieldKey(dataKey: string): string {
     if (dataKey.substring(dataKey.length - 5, dataKey.length).toLowerCase() == '_hash') {
         return dataKey.substring(0, dataKey.length - 5)
     }
     return dataKey
 }
 
-function isUpdatableField(fieldKey, subsection_path) {
+function isUpdatableField(fieldKey: string, subsection_path: string): boolean {
     if (fieldKey.substring(fieldKey.length - 2, fieldKey.length).toLowerCase() == 'id' && fieldKey != "client_id") {
         return false
     } else if (fieldKey.substring(fieldKey.length - 2, fieldKey.length).toLowerCase() == 'at') {
@@ -32,18 +38,18 @@ function isUpdatableField(fieldKey, subsection_path) {
     return true
 }
 
-function getIDField(path) {
+function getIDField(path: string): string {
     return path.substring(1, path.length - 1) + "_id"
 }
 
-function getPayloadIDField(path) {
+function getPayloadIDField(path: string): string {
     if (path = "/apps") {
         return "application_id"
     }
     return path.substring(1, path.length - 1) + "_id"
 }
 
-function getSubsectionTitle(subsection_path) {
+function getSubsectionTitle(subsection_path: string): string {
     const path = window.location.pathname
     if (path == "/users") {
         if (subsection_path == "/groups") return "Groups"
@@ -60,7 +66,7 @@ function getSubsectionTitle(subsection_path) {
     return ""
 }
 
-function getSubsectionPaths() {
+function getSubsectionPaths(): string[] {
     const path = window.location.pathname
     if (path == "/users") {
         return ["/groups"]
@@ -72,7 +78,7 @@ function getSubsectionPaths() {
     return []
 }
 
-function getFieldClass(field) {
+function getFieldClass(field: string): string {
     if (field.substring(field.length - 2, field.length).toLowerCase() == 'id' && field != "client_id") {
         return "idField"
     } else if (field.substring(field.length - 2, field.length).toLowerCase() == 'at') {
@@ -81,7 +87,7 @@ function getFieldClass(field) {
     return field.toLowerCase() + "Field"
 }
 
-function formatEntryData(entry, dataKey) {
+function formatEntryData(entry: Entry, dataKey: string): any {
     if (dataKey.substring(dataKey.length - 2, dataKey.length).toLowerCase() == 'id' && dataKey != "client_id") {
         return stringify(entry[dataKey])
     }
@@ -91,7 +97,7 @@ function formatEntryData(entry, dataKey) {
 // 0 == Cannot be filled
 // 1 == Optional
 // 2 == Required
-function getRequirementCategory(fieldKey) {
+function getRequirementCategory(fieldKey: string): number {
     const required = ['Name', 'Email', 'PasswordHash', 'ClientId', 'ClientSecretHash', 'RedirectUri', 'LogoutNotificationUrl']
     const optional = ['Description', 'LaunchUrl']
     for (const key of required) {
@@ -103,7 +109,7 @@ function getRequirementCategory(fieldKey) {
     return 0
 }
 
-function getSubsectionType(subsection_path) {
+function getSubsectionType(subsection_path: string): number {
     if (subsection_path == "/uri") {
         return 2;
     } else {
@@ -111,14 +117,14 @@ function getSubsectionType(subsection_path) {
     }
 }
 
-function toPayloadFieldKey(fieldKey) {
+function toPayloadFieldKey(fieldKey: string): string {
     var newStr = fieldKey
     if (isHashedField(newStr)) {
         newStr = newStr.substring(0, newStr.length - 4)
     }
     var newerStr = ""
     for (var i = 0; i < newStr.length; i++) {
-        if (i > 0 && isCapital(newStr[i]) && newStr != "ID") {
+        if (i > 0 && isCapital(newStr.charAt(i)) && newStr != "ID") {
             newerStr += "_" + newStr[i]
         } else {
             newerStr += newStr[i]
@@ -127,18 +133,18 @@ function toPayloadFieldKey(fieldKey) {
     return newerStr.toLowerCase()
 }
 
-function isHashedField(fieldKey) {
+function isHashedField(fieldKey: string): boolean {
     return fieldKey.substring(fieldKey.length - 4, fieldKey.length) == 'Hash'
 }
 
-function isCapital(char) {
+function isCapital(char: string): boolean {
   return char == char.toUpperCase() && char != char.toLowerCase();
 }
 
-function seperateFieldName(fieldName) {
+function seperateFieldName(fieldName: string): string {
     var newStr = ""
     for (var i = 0; i < fieldName.length; i++) {
-        if (i > 0 && isCapital(fieldName[i]) && fieldName != "ID") {
+        if (i > 0 && isCapital(fieldName.charAt(i)) && fieldName != "ID") {
             newStr += " " + fieldName[i]
         } else {
             newStr += fieldName[i]
@@ -147,10 +153,18 @@ function seperateFieldName(fieldName) {
     return newStr
 }
 
-function DataContainer({entry, dataKey, remount, subsection_path = "", subsection_uuid = []}) {
+interface DataContainerProps {
+    entry: Entry
+    dataKey: string
+    remount: () => void
+    subsection_path?: string
+    subsection_uuid?: any
+}
+
+function DataContainer({entry, dataKey, remount, subsection_path = "", subsection_uuid = []}: DataContainerProps) {
     const data = formatEntryData(entry, dataKey)
     const [inputValue, setInputValue] = useState(data)
-    const handleOnChange = (event) => {
+    const handleOnChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setInputValue(event.target.value)
     }
     const handleOnFocus = () => {
@@ -160,7 +174,7 @@ function DataContainer({entry, dataKey, remount, subsection_path = "", subsectio
         setInputValue(data)
     }
     
-    const handleDataUpdate = (event) => {
+    const handleDataUpdate = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key != 'Enter') return
         const id = entry['id']
         const path = window.location.pathname
@@ -211,7 +225,14 @@ function DataContainer({entry, dataKey, remount, subsection_path = "", subsectio
     )
 }
 
-function EntryRow({entry, remount, subsection = "", subsection_uuid = []}) {
+interface EntryRowProps {
+    entry: Entry
+    remount: () => void
+    subsection?: string
+    subsection_uuid?: any
+}
+
+function EntryRow({entry, remount, subsection = "", subsection_uuid = []}: EntryRowProps) {
     const [expanded, setExpanded] = useState(false)
     const keys = entry ? Object.keys(entry) : []
     const handleDelete = () => {
@@ -258,9 +279,15 @@ function EntryRow({entry, remount, subsection = "", subsection_uuid = []}) {
     )
 }
 
-function CreateInput({fieldKey, changeFieldValue, resetTrigger}) {
+interface CreateInputProps {
+    fieldKey: string
+    changeFieldValue: (fieldKey: string, value: string) => void
+    resetTrigger: number
+}
+
+function CreateInput({fieldKey, changeFieldValue, resetTrigger}: CreateInputProps) {
     const [value, setValue] = useState('')
-    const handleValueChange = (event) => {
+    const handleValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setValue(event.target.value)
         changeFieldValue(fieldKey, event.target.value)
     }
@@ -277,14 +304,18 @@ function CreateInput({fieldKey, changeFieldValue, resetTrigger}) {
     )
 }
 
-function TableHeader({remount}) {
-    const [fields, setFields] = useState(null)
-    const [createForm, setCreateForm] = useState({})
+interface TableHeaderProps {
+    remount: () => void
+}
+
+function TableHeader({remount}: TableHeaderProps) {
+    const [fields, setFields] = useState<FieldsResponse | null>(null)
+    const [createForm, setCreateForm] = useState<Record<string, any>>({})
     const [resetFieldTrigger, setResetFieldTrigger] = useState(0)
     const triggerFieldReset = () => {
         setResetFieldTrigger(resetFieldTrigger + 1)
     }
-    const handleCreateFormChange = (fieldKey, value) => {
+    const handleCreateFormChange = (fieldKey: string, value: string) => {
         const copy = createForm
         copy[toPayloadFieldKey(fieldKey)] = value
         setCreateForm(copy)
@@ -363,11 +394,18 @@ function TableHeader({remount}) {
     )
 }
 
-function SubsectionAddList({subsection_path, subsection_uuid, remount, remountKey}) {
-    const [addList, setAddList] = useState([])
+interface SubsectionAddListProps {
+    subsection_path: string
+    subsection_uuid: any
+    remount: () => void
+    remountKey: number
+}
+
+function SubsectionAddList({subsection_path, subsection_uuid, remount, remountKey}: SubsectionAddListProps) {
+    const [addList, setAddList] = useState<Entry[]>([])
     const path = window.location.pathname
 
-    const handleAddToSubsection = (pointed_id) => {
+    const handleAddToSubsection = (pointed_id: any) => {
         fetch('/server' + path + subsection_path, {
             method: 'POST',
             headers: {
@@ -431,16 +469,23 @@ function SubsectionAddList({subsection_path, subsection_uuid, remount, remountKe
     )
 }
 
-function SubsectionHeader({subsection_path, subsection_uuid, remount, remountKey}) {
+interface SubsectionHeaderProps {
+    subsection_path: string
+    subsection_uuid: any
+    remount: () => void
+    remountKey: number
+}
+
+function SubsectionHeader({subsection_path, subsection_uuid, remount, remountKey}: SubsectionHeaderProps) {
     const path = window.location.pathname
-    const [fields, setFields] = useState(null)
+    const [fields, setFields] = useState<FieldsResponse | null>(null)
     const [addListActive, setAddListActive] = useState(false)
-    const [createForm, setCreateForm] = useState({[getIDField(path)] : subsection_uuid})
+    const [createForm, setCreateForm] = useState<Record<string, any>>({[getIDField(path)] : subsection_uuid})
     const [resetFieldTrigger, setResetFieldTrigger] = useState(0)
     const triggerFieldReset = () => {
         setResetFieldTrigger(resetFieldTrigger + 1)
     }
-    const handleCreateFormChange = (fieldKey, value) => {
+    const handleCreateFormChange = (fieldKey: string, value: string) => {
         const copy = createForm
         copy[toPayloadFieldKey(fieldKey)] = value
         console.log(copy)
@@ -528,9 +573,14 @@ function SubsectionHeader({subsection_path, subsection_uuid, remount, remountKey
     )
 }
 
-function Subsection({subsection_path, subsection_uuid}) {
+interface SubsectionProps {
+    subsection_path: string
+    subsection_uuid: any
+}
+
+function Subsection({subsection_path, subsection_uuid}: SubsectionProps) {
     const path = window.location.pathname
-    const [subsectionData, setSubsectionData] = useState([])
+    const [subsectionData, setSubsectionData] = useState<Entry[]>([])
     const [remountKey, setRemountKey] = useState(0)
     const [expanded, setExpanded] = useState(false)
     const handleExpand = () => {
@@ -584,7 +634,11 @@ function Subsection({subsection_path, subsection_uuid}) {
     )
 }
 
-function SubsectionGroup({uuid}) {
+interface SubsectionGroupProps {
+    uuid: any
+}
+
+function SubsectionGroup({uuid}: SubsectionGroupProps) {
     const path = window.location.pathname
     const subsection_paths = getSubsectionPaths()
 
@@ -597,7 +651,12 @@ function SubsectionGroup({uuid}) {
     )
 }
 
-function ControlPanel({pageData, remount}) {
+interface ControlPanelProps {
+    pageData: Entry[]
+    remount: () => void
+}
+
+function ControlPanel({pageData, remount}: ControlPanelProps) {
     return (
         <div>
             <TableHeader remount={remount}></TableHeader>

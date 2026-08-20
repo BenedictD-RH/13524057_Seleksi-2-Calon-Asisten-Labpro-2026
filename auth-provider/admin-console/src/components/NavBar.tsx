@@ -1,6 +1,6 @@
 import './NavBar.css'
 
-function getPathName(pageName) {
+function getPathName(pageName: string): string {
     return '/' + pageName.toLowerCase()
 }
 

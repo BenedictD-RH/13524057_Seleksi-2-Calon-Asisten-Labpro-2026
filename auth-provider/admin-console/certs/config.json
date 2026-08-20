@@ -8,14 +8,14 @@
       "172.19.82.129",
       "172.18.0.1",
       "fe80::215:5dff:fed6:725",
-      "fe80::f0e5:5bff:fea2:23ac",
-      "fe80::4061:2fff:fe52:ea76",
-      "fe80::cc99:5bff:fe49:930e",
-      "fe80::40c:e5ff:fe38:1210"
+      "fe80::c49b:3bff:fed9:3076",
+      "fe80::3813:a4ff:fe9d:c997",
+      "fe80::e8eb:7ff:fe74:206f",
+      "fe80::ccf7:acff:fe1d:d042"
     ],
     "hash": {
-      "key": "3d0d9c7b54a419bc184eb3c0b09027f1b0266dc09ebb94df708afd4733909bf4",
-      "cert": "f6463cf48171c06a3d287f25632b8132658edb92589d3e16b4f47e737326064c"
+      "key": "3871c95f7ab924b894cda87f0ba342a93e5ba69fee013ad9c39efb259af73857",
+      "cert": "1256e5c806e551f0a9b1f4a049039a8d00c37795e39064986ae59aa0cee001b8"
     }
   },
   "configFilePath": "/home/benedict_darrel/13524057_Seleksi-2-Calon-Asisten-Labpro-2026/auth-provider/admin-console/certs/config.json"
