@@ -32,6 +32,22 @@ function App() {
       console.error(err)
     });
   }
+
+  const handleLogout = () => {
+    fetch('/backend/logout', {
+      method: 'POST',
+      credentials: 'include'
+    })
+    .then(response => {
+      if (response.ok) {
+        setUserData(null)
+      } else {
+        throw new Error('Network response was not ok');
+      }
+    }).catch(err => {
+      console.error(err)
+    });
+  }
   
   var pagecontent
   if (!userData) {
@@ -46,7 +62,7 @@ function App() {
     
     window.history.replaceState(null, '', url.toString());
   };
-  
+
   useEffect(() => {
     clearAllParamsNative()
     fetch('/backend/users', {
@@ -74,7 +90,8 @@ function App() {
   return (
     <div className="page">
       <div className="pageheader">
-        <h1 className="appname">App-A</h1>\
+        <h1 className="appname">App-A</h1>
+        {userData !== null ? <button className='logoutBtn' onClick={handleLogout}>Logout</button>: <></>}
       </div>
       <div className="pagebody">
         {unauthorizedMsg != null ? <div className='unauthorizedMsg'>{unauthorizedMsg}</div> : <></>}

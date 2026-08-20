@@ -37,7 +37,7 @@ func main() {
   r := gin.Default()
   
   r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{os.Getenv("AUTH_SERVER_URL"), os.Getenv("AUTH_PORTAL_URL")},
+		AllowOrigins:     []string{os.Getenv("AUTH_SERVER_URL"), os.Getenv("AUTH_PORTAL_URL"), os.Getenv("FRONTEND_URI")},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
