@@ -1,0 +1,22 @@
+{
+  "record": {
+    "hosts": [
+      "localhost",
+      "::1",
+      "127.0.0.1",
+      "10.255.255.254",
+      "172.19.82.129",
+      "172.18.0.1",
+      "fe80::215:5dff:fed6:725",
+      "fe80::f0e5:5bff:fea2:23ac",
+      "fe80::4061:2fff:fe52:ea76",
+      "fe80::cc99:5bff:fe49:930e",
+      "fe80::40c:e5ff:fe38:1210"
+    ],
+    "hash": {
+      "key": "1d03a438a987b765a2d2ce45b489bfff75d67cbe3428a2095565daddf5140705",
+      "cert": "6c6e93cc3f05a6d4dc20c44021fa934e9c7d7948acd3a85c7d31ae59ce646b6c"
+    }
+  },
+  "configFilePath": "/home/benedict_darrel/13524057_Seleksi-2-Calon-Asisten-Labpro-2026/applications/app-a/frontend/certs/config.json"
+}

@@ -48,6 +48,9 @@ body {
   font-weight: bold;
   color: white;
   font-family: Dosis;
+  margin-top: 35vh;
+  margin-bottom: 10vh;
+  align-self: center;
 }
 
 .unauthorizedMsg {

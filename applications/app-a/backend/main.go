@@ -35,16 +35,13 @@ func main() {
   } 
 
   r := gin.Default()
+  
   r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{os.Getenv("AUTH_SERVER_URL"),
-			"http://localhost:8081",
-		},
-		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		AllowOrigins:     []string{os.Getenv("AUTH_SERVER_URL"), os.Getenv("AUTH_PORTAL_URL")},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
-	r.RedirectTrailingSlash = false
-	r.RedirectFixedPath = false
 
   r.GET("/login", func(c *gin.Context) {
     auth.LoginRequest(c, db)
@@ -70,5 +67,5 @@ func main() {
     auth.BackChannelLogoutRequest(c, db)
   })
 
-  r.Run(":8691")
+  r.RunTLS(":8691", "./certs/localhost.pem", "./certs/localhost-key.pem")
 }

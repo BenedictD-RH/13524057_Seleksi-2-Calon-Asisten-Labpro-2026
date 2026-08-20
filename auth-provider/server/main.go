@@ -45,18 +45,15 @@ func main() {
 	}
 
 	r := gin.Default()
+
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{os.Getenv("AUTH_PORTAL_URI"),
-			os.Getenv("ADMIN_CONSOLE_URI"),
-			"http://localhost:8692",
-			"http://localhost:8961",
-		},
-		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		AllowOrigins:  	  []string{os.Getenv("AUTH_PORTAL_URI"), 
+								   os.Getenv("ADMIN_CONSOLE_URI"), 
+								   "https://localhost:8692", "https://localhost:8691"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
-	r.RedirectTrailingSlash = false
-	r.RedirectFixedPath = false
 
 	r.POST("/users", func(c *gin.Context) {
 		controlpanel.CreateUserRequest(c, db)
@@ -234,5 +231,5 @@ func main() {
 		centralsessionserver.PickSessionRequest(c, db)
 	})
 
-	r.Run()
+	r.RunTLS(":8080", "./certs/localhost.pem", "./certs/localhost-key.pem")
 }

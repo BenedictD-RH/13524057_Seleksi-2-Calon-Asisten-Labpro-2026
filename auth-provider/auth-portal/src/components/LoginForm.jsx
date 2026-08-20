@@ -29,7 +29,9 @@ function LoginForm() {
             return response.json()
         }).then(data => {
             if (data['error'] != null) {
+                
                 var error = data['error']
+                console.log(error)
                 if (error['code'] == "LOGIN_FAILED") {
                     setErrorMessage(error['message'])
                 } else if (error['code'] == "INVALID_GRANT") {

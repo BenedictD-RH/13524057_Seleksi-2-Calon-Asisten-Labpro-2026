@@ -17,7 +17,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var local_session_expr = 2 * time.Minute
+var local_session_expr = 24 * time.Hour
 
 type AccessTokenPayload struct {
 	Token string `json:"access_token" binding:"required"`
@@ -130,7 +130,7 @@ func AuthCallbackRequest(c *gin.Context, db *gorm.DB) {
 	payload := map[string]string{"code": code,
 		"code_verifier": codeVerifierModels[0].CodeVerifier,
 		"client_secret": client_secret,
-		"redirect_uri": "http://" + c.Request.Host + c.FullPath()}
+		"redirect_uri": "https://" + c.Request.Host + c.FullPath()}
 	jsonData, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/token", auth_server_url), bytes.NewReader(jsonData))
 
@@ -205,7 +205,7 @@ func AuthCallbackRequest(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	c.SetCookie("local_ssid", session_token, int(local_session_expr.Seconds()), "/", "", false, true)
+	c.SetCookie("local_ssid", session_token, int(local_session_expr.Seconds()), "/", "localhost", true, true)
 	c.JSON(http.StatusOK, gin.H{
 		"redirect" : os.Getenv("FRONTEND_URI"),
 	})

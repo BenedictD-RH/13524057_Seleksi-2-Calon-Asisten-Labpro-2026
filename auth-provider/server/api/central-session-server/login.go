@@ -102,6 +102,6 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 	   Where("user_id = ? AND id != ? AND status = ?", users[0].ID, session.ID, "Active").
 	   Updates(models.SSOSession{Status: "Revoked", RevokedReason: "new_session_created"})
 
-	c.SetCookie("ssid", session_token, int(session_exp_duration.Seconds()), "/", "", false, true)
+	c.SetCookie("ssid", session_token, int(session_exp_duration.Seconds()), "/", "localhost", false, true)
 	AuthResponse(c, db, &session)
 }

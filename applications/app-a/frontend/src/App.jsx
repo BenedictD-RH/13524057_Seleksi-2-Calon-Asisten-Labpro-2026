@@ -13,7 +13,7 @@ function App() {
   const handleLogin = () => {
     fetch('/backend/login', {
       redirect: 'manual',
-      origin: 'http://localhost:8692',
+      origin: 'https://localhost:8692',
       credentials: 'include'
     })
     .then(response => {
@@ -40,14 +40,14 @@ function App() {
   if (!userData) {
     pagecontent = <button className="loginbutton" onClick={handleLogin}>Login</button>
   } else {
-    pagecontent = <h1 className="contenttext">Hello, {userData.name}</h1>
+    pagecontent = <div className="contenttext">Hello, {userData.name}</div>
   }
 
   useEffect(() => {
     fetch('/backend/users', {
       method: 'GET',
       redirect: 'manual',
-      origin: 'http://localhost:8692',
+      origin: 'https://localhost:8692',
       credentials: 'include'
     }).then((res) => {
       if (res.ok) {
