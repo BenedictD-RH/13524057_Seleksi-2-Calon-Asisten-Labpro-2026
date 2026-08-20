@@ -49,6 +49,7 @@ func AddUserToGroup(c *gin.Context, db *gorm.DB) {
 	var userGroupPayload UserGroupPayload
 
 	if err := c.ShouldBindJSON(&userGroupPayload); err != nil {
+		models.AuditEvent("add_user_to_group", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to add user to group: " + err.Error(),
@@ -58,6 +59,7 @@ func AddUserToGroup(c *gin.Context, db *gorm.DB) {
 
 	userGroupModel, err := userGroupPayload.GetDBStructCreate()
 	if err != nil {
+		models.AuditEvent("add_user_to_group", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to add user to group: " + err.Error(),
@@ -66,6 +68,7 @@ func AddUserToGroup(c *gin.Context, db *gorm.DB) {
 	}
 
 	if err := db.Create(&userGroupModel).Error; err != nil {
+		models.AuditEvent("add_user_to_group", "failed", &userGroupModel.UserId, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to add user to group: " + err.Error(),
@@ -73,6 +76,7 @@ func AddUserToGroup(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
+	models.AuditEvent("add_user_to_group", "success", &userGroupModel.UserId, nil, nil, c, db)
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "Successfully added user to group",
@@ -83,6 +87,7 @@ func RemoveUserFromGroup(c *gin.Context, db, mq *gorm.DB) {
 	var userGroupPayload UserGroupPayload
 
 	if err := c.ShouldBindJSON(&userGroupPayload); err != nil {
+		models.AuditEvent("remove_user_from_group", "success", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to remove user from group: " + err.Error(),
@@ -93,6 +98,8 @@ func RemoveUserFromGroup(c *gin.Context, db, mq *gorm.DB) {
 	OnUserGroupRemove(userGroupPayload.UserId, userGroupPayload.GroupId, db, mq)
 
 	db.Where("user_id = ? AND group_id = ?", userGroupPayload.UserId, userGroupPayload.GroupId).Delete(&models.UserGroup{})
+
+	models.AuditEvent("remove_user_from_group", "success", &userGroupPayload.UserId, nil, nil, c, db)
 
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",

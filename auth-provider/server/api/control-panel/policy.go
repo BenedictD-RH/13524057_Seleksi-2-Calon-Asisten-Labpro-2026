@@ -53,6 +53,7 @@ func AddAppGroupPolicyRequest(c *gin.Context, db *gorm.DB) {
 	var appGroupPayload AppGroupPayload
 
 	if err := c.ShouldBindJSON(&appGroupPayload); err != nil {
+		models.AuditEvent("add_policy", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to add policy: " + err.Error(),
@@ -62,6 +63,7 @@ func AddAppGroupPolicyRequest(c *gin.Context, db *gorm.DB) {
 
 	policyModel, err := appGroupPayload.GetDBStructCreate()
 	if err != nil {
+		models.AuditEvent("add_policy", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to add policy: " + err.Error(),
@@ -70,6 +72,7 @@ func AddAppGroupPolicyRequest(c *gin.Context, db *gorm.DB) {
 	}
 
 	if err := db.Create(&policyModel).Error; err != nil {
+		models.AuditEvent("add_policy", "failed", nil, &policyModel.ID, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to add policy: " + err.Error(),
@@ -77,6 +80,7 @@ func AddAppGroupPolicyRequest(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
+	models.AuditEvent("add_policy", "success", nil, &policyModel.ID, nil, c, db)
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "Successfully added policy",
@@ -87,6 +91,7 @@ func RemoveAppGroupPolicyRequest(c *gin.Context, db, mq *gorm.DB) {
 	var appGroupPayload AppGroupPayload
 
 	if err := c.ShouldBindJSON(&appGroupPayload); err != nil {
+		models.AuditEvent("remove_policy", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to remove policy: " + err.Error(),
@@ -98,6 +103,7 @@ func RemoveAppGroupPolicyRequest(c *gin.Context, db, mq *gorm.DB) {
 
 	db.Where("application_id = ? AND group_id = ?", appGroupPayload.AppId, appGroupPayload.GroupId).Delete(&models.ApplicationGroupPolicy{})
 
+	models.AuditEvent("remove_policy", "success", nil, &appGroupPayload.AppId, nil, c, db)
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Successfully removed policy",
@@ -108,6 +114,7 @@ func UpdateAppGroupPolicyRequest(c *gin.Context, db, mq *gorm.DB) {
 	var appGroupPayload AppGroupPayload
 
 	if err := c.ShouldBindJSON(&appGroupPayload); err != nil {
+		models.AuditEvent("update_policy", "success", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to update policy: " + err.Error(),
@@ -123,6 +130,7 @@ func UpdateAppGroupPolicyRequest(c *gin.Context, db, mq *gorm.DB) {
 		Where("application_id = ? AND group_id = ?", appGroupPayload.AppId, appGroupPayload.GroupId).
 		Updates(models.ApplicationGroupPolicy{Effect: appGroupPayload.Effect})
 
+	models.AuditEvent("update_policy", "success", nil, &appGroupPayload.AppId, nil, c, db)
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Successfully updated policy",

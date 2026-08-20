@@ -1,7 +1,11 @@
 package models
 
 import (
+	"auth-provider-server/api/utility"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -196,5 +200,51 @@ func (ApplicationGroupPolicy) TableName() string {
 	return "application_group_policies"
 }
 
+type AuditLog struct {
+	ID            datatypes.BinUUID `gorm:"type:binary(16);primaryKey;default:(UUID_TO_BIN(UUID()))"`
+	EventType string
+	ActorId *datatypes.BinUUID
+	UserId *datatypes.BinUUID
+	ApplicationId *datatypes.BinUUID
+	SessionId *datatypes.BinUUID
+	Result string
+	Metadata datatypes.JSON
+	IpAddress string
+	CreatedAt time.Time
+}
 
+func AuditEvent(eventType, result string, user_id, app_id, session_id *datatypes.BinUUID, c *gin.Context, db *gorm.DB) {
+	newUUID, _ := uuid.NewRandom()
 
+	var actor_id *datatypes.BinUUID
+	session_token, err := c.Cookie("ssid")
+	if err != nil {
+		actor_id = nil
+	} else {
+		var sessions []SSOSession
+
+		db.Model(&SSOSession{}).
+			Where("session_token_hash = ? AND status = ?", utility.HashToken(session_token), "Active").
+			Find(&sessions)
+		
+		if len(sessions) == 0 {
+			actor_id = nil
+		} else {
+			actor_id = &sessions[0].UserId
+		}
+	}
+
+	audit_log := AuditLog{
+		ID: datatypes.BinUUID(newUUID),
+		EventType: eventType,
+		Result: result,
+		ActorId: actor_id,
+		UserId: user_id,
+		ApplicationId: app_id,
+		SessionId: session_id,
+		IpAddress: c.ClientIP(),
+		CreatedAt: time.Now(),
+	}
+
+	db.Create(&audit_log)
+}

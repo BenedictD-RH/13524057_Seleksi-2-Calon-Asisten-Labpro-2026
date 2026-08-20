@@ -118,6 +118,7 @@ func AuthResponse(c *gin.Context, db *gorm.DB, session *models.SSOSession) {
 	code_challenge := c.Query("code_challenge")
 	state := c.Query("state")
 	if state == "" || client_id == "" || redirect_uri == "" || code_challenge == "" {
+		models.AuditEvent("publish_auth_code", "failed", &session.UserId, nil, &session.ID, c, db)
 		UnauthorizedResponse(c, "Missing query parameters")
 		return
 	}
@@ -125,11 +126,13 @@ func AuthResponse(c *gin.Context, db *gorm.DB, session *models.SSOSession) {
 	var apps []models.Application
 	db.Where("client_id = ?", client_id).Find(&apps)
 	if len(apps) <= 0 {
+		models.AuditEvent("publish_auth_code", "failed", &session.UserId, nil, &session.ID, c, db)
 		UnauthorizedResponse(c, "Invalid Client ID")
 		return
 	}
 
 	if (apps[0].Status != "Active") {
+		models.AuditEvent("publish_auth_code", "failed", &session.UserId, &apps[0].ID, &session.ID, c, db)
 		UnauthorizedResponse(c, "Application is not active")
 		return
 	}
@@ -137,31 +140,39 @@ func AuthResponse(c *gin.Context, db *gorm.DB, session *models.SSOSession) {
 	var redirect_uris []models.ApplicationRedirectURI
 	db.Where("redirect_uri = ? AND application_id = ?", redirect_uri, apps[0].ID).Find(&redirect_uris)
 	if len(redirect_uris) <= 0 {
+		models.AuditEvent("redirect_uri_mismatch", "success", &session.UserId, &apps[0].ID, &session.ID, c, db)
 		UnauthorizedResponse(c, "Redirect URI not registered")
 		return
 	}
 
 	user := models.User{ID: session.UserId}
 	if (!user.IsAuthorized(apps[0].ID, db)) {
+		models.AuditEvent("policy_deny", "success", &session.UserId, &apps[0].ID, &session.ID, c, db)
 		UnauthorizedResponse(c, "Policy Denied")
 		return
 	}
 
 	if (!session.IsValid()) {
+		models.AuditEvent("publish_auth_code", "failed", &session.UserId, &apps[0].ID, &session.ID, c, db)
 		UnauthorizedResponse(c, "Invalid session")
 		return
 	}
 
 	auth_code_model, auth_code := GenerateAuthCode(code_challenge, redirect_uri, *session, apps[0], c, db)
 	if auth_code_model == nil && auth_code == "" {
+		models.AuditEvent("publish_auth_code", "failed", &session.UserId, &apps[0].ID, &session.ID, c, db)
 		UnauthorizedResponse(c, "Invalid Authorization Code")
 		return
 	}
 
 	if err := db.Create(auth_code_model).Error; err != nil {
+		models.AuditEvent("publish_auth_code", "failed", &session.UserId, &apps[0].ID, &session.ID, c, db)
 		InternalServerResponse(c)
 		return
 	}
+
+	models.AuditEvent("publish_auth_code", "success", &session.UserId, &apps[0].ID, &session.ID, c, db)
+
 	c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s?code=%s&state=%s", redirect_uri, auth_code, state))
 }
 

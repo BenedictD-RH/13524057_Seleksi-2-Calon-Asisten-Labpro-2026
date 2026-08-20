@@ -196,7 +196,9 @@ function DataContainer({entry, dataKey, remount, subsection_path = "", subsectio
                                                 [getIDField(subsection_path)] : entry[getPayloadIDField(subsection_path)],
                                                 [updateFieldKey(dataKey)]: inputValue
                                             })),
+            credentials: 'include'
                 })
+            
         .then((res) => {
             if (res.ok) {
                 return res.json();
@@ -243,6 +245,7 @@ function EntryRow({entry, remount, subsection = "", subsection_uuid = []}: Entry
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
+            credentials: 'include',
             body: (subsection == "" || getSubsectionType(subsection) == 2  ? JSON.stringify({"id": entry['id']}) : 
                                       JSON.stringify({
                                         [getIDField(path)] : subsection_uuid,
@@ -329,6 +332,7 @@ function TableHeader({remount}: TableHeaderProps) {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify(createForm),
         }).then((res) => {
             return res.json()
@@ -412,6 +416,7 @@ function SubsectionAddList({subsection_path, subsection_uuid, remount, remountKe
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({
                 [getIDField(path)] : subsection_uuid,
                 [getIDField(subsection_path)] : pointed_id
@@ -498,6 +503,7 @@ function SubsectionHeader({subsection_path, subsection_uuid, remount, remountKey
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify(createForm),
         }).then((res) => {
             return res.json()

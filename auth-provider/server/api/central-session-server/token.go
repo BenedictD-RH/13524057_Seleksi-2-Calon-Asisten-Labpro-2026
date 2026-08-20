@@ -59,23 +59,27 @@ func TokenRequest(c *gin.Context, db *gorm.DB) {
 	var auth_codes []models.AuthorizationCode
 	db.Where("code_hash = ?", utility.HashToken(tokenPayload.Code)).Find(&auth_codes)
 	if len(auth_codes) != 1 {
+		models.AuditEvent("token_request", "failed", nil, nil, nil, c, db)
 		UnauthorizedResponse(c, "Invalid Authorization code")
 		return
 	}
 	
 
 	if (!auth_codes[0].IsValid()) {
+		models.AuditEvent("token_request", "failed", &auth_codes[0].UserId, &auth_codes[0].ApplicationId, &auth_codes[0].SsoSessionId, c, db)
 		UnauthorizedResponse(c, "Invalid Authorization code")
 		return
 	}
 
 	if (auth_codes[0].RedirectUri != tokenPayload.RedirectURI) {
+		models.AuditEvent("token_request", "failed", &auth_codes[0].UserId, &auth_codes[0].ApplicationId, &auth_codes[0].SsoSessionId, c, db)
 		UnauthorizedResponse(c, "Redirect URI mismatch")
 		return
 	}
 
 	auth_code := &auth_codes[0]
 	if !utility.CheckPasswordHash(tokenPayload.CodeVerifier, auth_code.CodeChallenge) {
+		models.AuditEvent("token_request", "failed", &auth_codes[0].UserId, &auth_codes[0].ApplicationId, &auth_codes[0].SsoSessionId, c, db)
 		UnauthorizedResponse(c, "Invalid Authorization code")
 		return
 	}
@@ -83,26 +87,31 @@ func TokenRequest(c *gin.Context, db *gorm.DB) {
 	var apps []models.Application
 	db.Where("id = ?", auth_code.ApplicationId).Find(&apps)
 	if len(apps) <= 0 {
+		models.AuditEvent("token_request", "failed", &auth_codes[0].UserId, &auth_codes[0].ApplicationId, &auth_codes[0].SsoSessionId, c, db)
 		UnauthorizedResponse(c, "App not found")
 		return
 	}
 	app = apps[0]
 
 	if !utility.CheckPasswordHash(tokenPayload.ClientSecret, app.ClientSecretHash) {
+		models.AuditEvent("token_request", "failed", &auth_codes[0].UserId, &auth_codes[0].ApplicationId, &auth_codes[0].SsoSessionId, c, db)
 		UnauthorizedResponse(c, "Invalid client secret")
 		return
 	}
 
 	accessTokenModel, access_token := GenerateAccessToken(c, auth_code)
 	if accessTokenModel == nil {
+		models.AuditEvent("token_request", "failed", &auth_codes[0].UserId, &auth_codes[0].ApplicationId, &auth_codes[0].SsoSessionId, c, db)
 		InternalServerResponse(c)
 		return
 	}
 	if err := db.Create(&accessTokenModel).Error; err != nil {
+		models.AuditEvent("token_request", "failed", &auth_codes[0].UserId, &auth_codes[0].ApplicationId, &auth_codes[0].SsoSessionId, c, db)
 		InternalServerResponse(c)
 		return
 	}
-
+	models.AuditEvent("token_request", "success", &auth_codes[0].UserId, &auth_codes[0].ApplicationId, &auth_codes[0].SsoSessionId, c, db)
+	
 	c.JSON(http.StatusCreated, gin.H{
 		"status":       "success",
 		"message":      "Access Token successfully generated",

@@ -43,7 +43,7 @@ func InternalServerResponse(c *gin.Context) {
 	})
 }
 
-func GenerateSession(user models.User) (models.SSOSession, string, error) {
+func GenerateSession(user models.User, c *gin.Context) (models.SSOSession, string, error) {
 	newUUID, err := uuid.NewRandom()
 	if err != nil {
 		return models.SSOSession{}, "", err
@@ -58,6 +58,8 @@ func GenerateSession(user models.User) (models.SSOSession, string, error) {
 		UserId:           user.ID,
 		SessionTokenHash: token_hash,
 		Status:           "Active",
+		IpAddress: c.ClientIP(),
+		UserAgent: c.Request.UserAgent(),
 		CreatedAt:        time.Now(),
 		ExpiresAt:        time.Now().Add(session_exp_duration),
 	}, session_token, nil
@@ -67,6 +69,7 @@ func LoginRequest(c *gin.Context, db, mq *gorm.DB) {
 	var loginPayload LoginPayload
 
 	if err := c.ShouldBindJSON(&loginPayload); err != nil {
+		models.AuditEvent("login_attempt", "failed", nil, nil, nil, c, db)
 		UnauthorizedLoginResponse(c, "Invalid login form!")
 		return
 	}
@@ -74,27 +77,32 @@ func LoginRequest(c *gin.Context, db, mq *gorm.DB) {
 	db.Where("email = ?", loginPayload.Email).Find(&users)
 
 	if len(users) <= 0 {
+		models.AuditEvent("login_attempt", "failed", nil, nil, nil, c, db)
 		UnauthorizedLoginResponse(c, "Wrong username or password!")
 		return
 	}
 
 	if !users[0].IsActive() {
+		models.AuditEvent("login_attempt", "failed", &users[0].ID, nil, nil, c, db)
 		UnauthorizedLoginResponse(c, "User account is inactive!")
 		return
 	}
 
 	if !utility.CheckPasswordHash(loginPayload.Password, users[0].PasswordHash) {
+		models.AuditEvent("login_attempt", "failed", &users[0].ID, nil, nil, c, db)
 		UnauthorizedLoginResponse(c, "Wrong username or password!")
 		return
 	}
 
-	session, session_token, err := GenerateSession(users[0])
+	session, session_token, err := GenerateSession(users[0], c)
 	if err != nil {
+		models.AuditEvent("login_attempt", "failed", &users[0].ID, nil, nil, c, db)
 		InternalServerResponse(c)
 		return
 	}
 	result := db.Create(&session)
 	if err := result.Error; err != nil {
+		models.AuditEvent("login_attempt", "failed", &users[0].ID, nil, nil, c, db)
 		InternalServerResponse(c)
 		return
 	}
@@ -113,6 +121,7 @@ func LoginRequest(c *gin.Context, db, mq *gorm.DB) {
 			Find(&sessions)
 		
 		if len(sessions) != 1 {
+			models.AuditEvent("login_attempt", "failed", &users[0].ID, nil, &session.ID, c, db)
 			InternalServerResponse(c)
 			return
 		}
@@ -122,10 +131,10 @@ func LoginRequest(c *gin.Context, db, mq *gorm.DB) {
 		db.Model(&models.SSOSession{}).
 			Where("session_token_hash = ?", utility.HashToken(old_session_token)).
 			Updates(models.SSOSession{Status: "Revoked", RevokedReason: "user_logout"})
-		}
+	}
 
 	
-
+	
 
 	c.SetCookie("ssid", session_token, int(session_exp_duration.Seconds()), "/", "localhost", false, true)
 
@@ -134,10 +143,17 @@ func LoginRequest(c *gin.Context, db, mq *gorm.DB) {
 	code_challenge := c.Query("code_challenge")
 	state := c.Query("state")
 	if state == "" && client_id == "" && redirect_uri == "" && code_challenge == "" {
+		models.AuditEvent("login_attempt", "success", &users[0].ID, nil, &session.ID, c, db)
 		c.JSON(http.StatusOK, gin.H{
 			"status" : "authorized",
 		})
 		return
 	}
+	var app models.Application
+
+	db.Model(&models.Application{}).Where("client_id = ?", client_id).Find(&app)
+
+	models.AuditEvent("login_attempt", "success", &users[0].ID, &app.ID, &session.ID, c, db)
+
 	AuthResponse(c, db, &session)
 }

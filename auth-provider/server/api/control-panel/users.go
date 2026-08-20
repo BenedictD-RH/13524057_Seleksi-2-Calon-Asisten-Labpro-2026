@@ -80,6 +80,7 @@ func CreateUserRequest(c *gin.Context, db *gorm.DB) {
 	var userPayload CreateUserPayload
 
 	if err := c.ShouldBindJSON(&userPayload); err != nil {
+		models.AuditEvent("create_user", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to create user: " + err.Error(),
@@ -88,6 +89,7 @@ func CreateUserRequest(c *gin.Context, db *gorm.DB) {
 	}
 	userModel, err := userPayload.GetDBStruct()
 	if err != nil {
+		models.AuditEvent("create_user", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to create user: " + err.Error(),
@@ -96,12 +98,15 @@ func CreateUserRequest(c *gin.Context, db *gorm.DB) {
 	}
 
 	if err := db.Create(&userModel).Error; err != nil {
+		models.AuditEvent("create_user", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to create user: " + err.Error(),
 		})
 		return
 	}
+
+	models.AuditEvent("create_user", "success", &userModel.ID, nil, nil, c, db)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
@@ -141,6 +146,7 @@ func UpdateUserRequest(c *gin.Context, db, mq *gorm.DB) {
 	var userPayload UpdateUserPayload
 
 	if err := c.ShouldBindJSON(&userPayload); err != nil {
+		models.AuditEvent("update_user", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to update user: " + err.Error(),
@@ -152,12 +158,14 @@ func UpdateUserRequest(c *gin.Context, db, mq *gorm.DB) {
 		OnSetUserInactiveUpdate(userPayload.Id, db, mq)
 	}
 	
-
+	updateType := "update_user"
 	userQuery, updatedUserModel, err := userPayload.GetDBStruct()
 	if (updatedUserModel.PasswordHash != "") {
+		updateType = "password_change"
 		OnUserPasswordChangeUpdate(userPayload.Id, db, mq)
 	}
 	if err != nil {
+		models.AuditEvent(updateType, "failed", &userPayload.Id, nil, nil, c, db)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to update user: " + err.Error(),
@@ -166,13 +174,14 @@ func UpdateUserRequest(c *gin.Context, db, mq *gorm.DB) {
 	}
 
 	if err := db.Model(&userQuery).Updates(updatedUserModel).Error; err != nil {
+		models.AuditEvent(updateType, "failed", &userPayload.Id, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to update user: " + err.Error(),
 		})
 		return
 	}
-
+	models.AuditEvent(updateType, "success", &userPayload.Id, nil, nil, c, db)
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "User successfully updated",
@@ -183,6 +192,7 @@ func DeleteUserRequest(c *gin.Context, db, mq *gorm.DB) {
 	var userPKey PKeyPayload
 
 	if err := c.ShouldBindJSON(&userPKey); err != nil {
+		models.AuditEvent("delete_user", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to delete user: " + err.Error(),
@@ -194,13 +204,14 @@ func DeleteUserRequest(c *gin.Context, db, mq *gorm.DB) {
 
 	userModel := userPKey.GetUserModel()
 	if err := db.Delete(&userModel).Error; err != nil {
+		models.AuditEvent("delete_user", "failed", &userPKey.Id, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to delete user: " + err.Error(),
 		})
 		return
 	}
-
+	models.AuditEvent("delete_user", "success", &userPKey.Id, nil, nil, c, db)
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "User successfully deleted",

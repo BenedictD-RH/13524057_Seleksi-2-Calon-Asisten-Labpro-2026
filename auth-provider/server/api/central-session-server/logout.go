@@ -26,6 +26,7 @@ func LogoutRequest(c *gin.Context, db, mq *gorm.DB) {
 	   Find(&sessions)
 	
 	if len(sessions) != 1 {
+		models.AuditEvent("logout_attempt", "failed", nil, nil, nil, c, db)
 		InternalServerResponse(c)
 		return
 	}
@@ -37,7 +38,7 @@ func LogoutRequest(c *gin.Context, db, mq *gorm.DB) {
 	   Updates(models.SSOSession{Status: "Revoked", RevokedReason: "user_logout"})
 
 	c.SetCookie("ssid", "", -1, "/", "", false, true)
-
+	models.AuditEvent("logout_attempt", "success", &sessions[0].UserId, nil, &sessions[0].ID, c, db)
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Logout successful",

@@ -59,6 +59,7 @@ func CreateGroupRequest(c *gin.Context, db *gorm.DB) {
 	var groupPayload CreateGroupPayload
 
 	if err := c.ShouldBindJSON(&groupPayload); err != nil {
+		models.AuditEvent("create_group", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to create group: " + err.Error(),
@@ -68,6 +69,7 @@ func CreateGroupRequest(c *gin.Context, db *gorm.DB) {
 
 	groupModel, err := groupPayload.GetDBStruct()
 	if err != nil {
+		models.AuditEvent("create_group", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to create group: " + err.Error(),
@@ -76,13 +78,14 @@ func CreateGroupRequest(c *gin.Context, db *gorm.DB) {
 	}
 
 	if err := db.Create(&groupModel).Error; err != nil {
+		models.AuditEvent("create_group", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to create group: " + err.Error(),
 		})
 		return
 	}
-
+	models.AuditEvent("create_group", "success", nil, nil, nil, c, db)
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "Group successfully created",
@@ -121,6 +124,7 @@ func UpdateGroupRequest(c *gin.Context, db *gorm.DB) {
 	var groupPayload UpdateGroupPayload
 
 	if err := c.ShouldBindJSON(&groupPayload); err != nil {
+		models.AuditEvent("update_group", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to update group: " + err.Error(),
@@ -131,13 +135,14 @@ func UpdateGroupRequest(c *gin.Context, db *gorm.DB) {
 	userGroup, updatedGroupModel := groupPayload.GetDBStruct()
 
 	if err := db.Model(&userGroup).Updates(updatedGroupModel).Error; err != nil {
+		models.AuditEvent("update_group", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to update group: " + err.Error(),
 		})
 		return
 	}
-
+	models.AuditEvent("update_group", "success", nil, nil, nil, c, db)
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Group successfully updated",
@@ -148,6 +153,7 @@ func DeleteGroupRequest(c *gin.Context, db *gorm.DB, mq *gorm.DB) {
 	var groupPKey PKeyPayload
 
 	if err := c.ShouldBindJSON(&groupPKey); err != nil {
+		models.AuditEvent("delete_group", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to delete group: " + err.Error(),
@@ -159,6 +165,7 @@ func DeleteGroupRequest(c *gin.Context, db *gorm.DB, mq *gorm.DB) {
 
 	groupModel := groupPKey.GetGroupModel()
 	if err := db.Delete(&groupModel).Error; err != nil {
+		models.AuditEvent("delete_group", "failed", nil, nil, nil, c, db)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Failed to delete group: " + err.Error(),
@@ -166,6 +173,7 @@ func DeleteGroupRequest(c *gin.Context, db *gorm.DB, mq *gorm.DB) {
 		return
 	}
 
+	models.AuditEvent("delete_group", "success", nil, nil, nil, c, db)
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Group successfully deleted",
