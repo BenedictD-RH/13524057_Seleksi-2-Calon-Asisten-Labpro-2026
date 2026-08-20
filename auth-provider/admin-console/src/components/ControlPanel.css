@@ -133,6 +133,21 @@ li {
     width: 25vw;
 }
 
+.logoutnotificationurlFieldCont, .logout_notification_urlFieldCont, .logout_notification_urlField {
+    width:15vw;
+}
+
+.redirect_uriFieldCont, .redirecturiFieldCont, .redirect_uriField {
+    width:15vw;
+}
+
+.logout_notification_urlField, .redirect_uriField {
+    font-size: 1.3vh;
+}
+
+.urlField {
+    font-size: 1vh;
+}
 
 .addListRow {
     background-color: silver;

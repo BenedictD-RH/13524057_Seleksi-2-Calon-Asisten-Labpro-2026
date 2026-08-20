@@ -150,11 +150,15 @@ func main() {
 	})
 
 	r.POST("/login", func(c *gin.Context) {
-		centralsessionserver.LoginRequest(c, db)
+		centralsessionserver.LoginRequest(c, db, mq)
 	})
 
 	r.GET("/authorize", func(c *gin.Context) {
 		centralsessionserver.AuthorizeRequest(c, db)
+	})
+
+	r.GET("/authorize/administrator", func(c *gin.Context) {
+		centralsessionserver.AuthorizeAdminRequest(c, db)
 	})
 
 	r.POST("/token", func(c *gin.Context) {
@@ -163,6 +167,10 @@ func main() {
 
 	r.GET("/userinfo", func(c *gin.Context) {
 		centralsessionserver.UserInfoRequest(c, db)
+	})
+
+	r.GET("/userinfo/central", func(c *gin.Context) {
+		centralsessionserver.UserInfoInternalRequest(c, db)
 	})
 
 	r.POST("/apps", func(c *gin.Context) {
@@ -229,6 +237,10 @@ func main() {
 
 	r.GET("/session/use", func(c *gin.Context) {
 		centralsessionserver.PickSessionRequest(c, db)
+	})
+
+	r.GET("/return", func(c *gin.Context) {
+		centralsessionserver.ReturnToClientPage(c, db)
 	})
 
 	r.RunTLS(":8080", "./certs/localhost.pem", "./certs/localhost-key.pem")

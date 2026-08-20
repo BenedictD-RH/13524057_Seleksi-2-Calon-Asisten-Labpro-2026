@@ -61,6 +61,25 @@ func UserInfoRequest(c *gin.Context, db *gorm.DB) {
 	})
 }
 
+func UserInfoInternalRequest(c *gin.Context, db *gorm.DB) {
+	session_token, _ := c.Cookie("ssid")
+	var sessions []models.SSOSession
+	db.Where("status = ? AND session_token_hash = ?", "Active", utility.HashToken(session_token)).Find(&sessions)
+	if len(sessions) != 1 {
+		InternalServerResponse(c)
+		return
+	}
+
+	var user models.User
+	db.Model(&models.User{}).Where("id = ?", sessions[0].UserId).First(&user)
+
+	c.JSON(http.StatusOK, gin.H{
+		"user_id":            user.ID,
+		"name":               user.Name,
+		"email":              user.Email,
+	})
+}
+
 func GetSessionInfoRequest(c *gin.Context, db *gorm.DB) {
 	session_token, _ := c.Cookie("ssid")
 	var sessions []models.SSOSession

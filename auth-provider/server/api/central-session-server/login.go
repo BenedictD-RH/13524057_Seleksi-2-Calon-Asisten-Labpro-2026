@@ -1,6 +1,7 @@
 package centralsessionserver
 
 import (
+	eventpublisher "auth-provider-server/api/event-publisher"
 	"auth-provider-server/api/models"
 	"auth-provider-server/api/utility"
 	"net/http"
@@ -62,7 +63,7 @@ func GenerateSession(user models.User) (models.SSOSession, string, error) {
 	}, session_token, nil
 }
 
-func LoginRequest(c *gin.Context, db *gorm.DB) {
+func LoginRequest(c *gin.Context, db, mq *gorm.DB) {
 	var loginPayload LoginPayload
 
 	if err := c.ShouldBindJSON(&loginPayload); err != nil {
@@ -102,6 +103,41 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 	   Where("user_id = ? AND id != ? AND status = ?", users[0].ID, session.ID, "Active").
 	   Updates(models.SSOSession{Status: "Revoked", RevokedReason: "new_session_created"})
 
+
+	old_session_token, err := c.Cookie("ssid")
+	if err == nil {
+		var sessions []models.SSOSession
+
+		db.Model(&models.SSOSession{}).
+			Where("session_token_hash = ? AND status = ?", utility.HashToken(old_session_token), "Active").
+			Find(&sessions)
+		
+		if len(sessions) != 1 {
+			InternalServerResponse(c)
+			return
+		}
+
+		eventpublisher.PublishEvent(sessions[0].UserId, &sessions[0].ID, nil, "SessionRevoked", "user_logout", mq)
+
+		db.Model(&models.SSOSession{}).
+			Where("session_token_hash = ?", utility.HashToken(old_session_token)).
+			Updates(models.SSOSession{Status: "Revoked", RevokedReason: "user_logout"})
+		}
+
+	
+
+
 	c.SetCookie("ssid", session_token, int(session_exp_duration.Seconds()), "/", "localhost", false, true)
+
+	client_id := c.Query("client_id")
+	redirect_uri := c.Query("redirect_uri")
+	code_challenge := c.Query("code_challenge")
+	state := c.Query("state")
+	if state == "" && client_id == "" && redirect_uri == "" && code_challenge == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"status" : "authorized",
+		})
+		return
+	}
 	AuthResponse(c, db, &session)
 }

@@ -9,12 +9,18 @@ interface LoginError {
 interface LoginResponse {
     error?: LoginError | null;
     redirect?: string;
+    status?: string;
+}
+
+interface ReturnURL {
+    client_url?: string;
 }
 
 function LoginForm() {
     const [email, setEmail] = useState<string>("")
     const [password, setPassword] = useState<string>("")
     const [errorMessage, setErrorMessage] = useState<string>("")
+
 
     const handleEmailChange = (event: ChangeEvent<HTMLInputElement>): void => {
         setEmail(event.target.value)
@@ -45,10 +51,19 @@ function LoginForm() {
                 if (error.code === "LOGIN_FAILED") {
                     setErrorMessage(error.message)
                 } else if (error.code === "INVALID_GRANT") {
-                    // TODO: redirect back to page but with invalid grant msg
+                    const searchParams = new URLSearchParams(window.location.search)
+                    fetch('/server/return?client_id=' + searchParams.get('client_id'))
+                    .then((response: Response) => response.json())
+                    .then((data: ReturnURL) => {
+                        if (data.client_url != "") {
+                            window.location.href = data.client_url + "?errorMsg=" + error.message
+                        }
+                    })
                 }
             } else if (data.redirect) {
                 window.location.href = data.redirect
+            } else if (data.status == "authorized") {
+                window.location.pathname = ""
             }
         })
         .catch((err: unknown) => console.error(err));

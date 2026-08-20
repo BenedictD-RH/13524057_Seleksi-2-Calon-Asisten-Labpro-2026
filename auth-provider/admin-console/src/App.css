@@ -9,3 +9,16 @@
     margin-left: 4vw;
     margin-top:5vh;
 }
+
+.unauthorizedTitle {
+    font-family: 'Momo Trust Display';
+    font-size: 7vw;
+    text-align: center;
+    margin-top: 13vw;
+}
+
+.unauthorizedMsg {
+    font-family: 'Momo Trust Display';
+    font-size: 2vw;
+    text-align: center;
+}

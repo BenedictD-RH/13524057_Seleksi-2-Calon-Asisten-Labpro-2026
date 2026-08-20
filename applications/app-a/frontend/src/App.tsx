@@ -7,7 +7,7 @@ interface UserData {
 
 function App() {
   const [userData, setUserData] = useState<UserData | null>(null)
-  const [unauthorizedMsg, setUnauthorizedMsg] = useState("")
+  const [unauthorizedMsg, setUnauthorizedMsg] = useState((new URLSearchParams(window.location.search)).get("errorMsg"))
   const handleLogin = () => {
     fetch('/backend/login', {
       redirect: 'manual',
@@ -40,7 +40,15 @@ function App() {
     pagecontent = <div className="contenttext">Hello, {userData.name}</div>
   }
 
+  const clearAllParamsNative = () => {
+    const url = new URL(window.location.href);
+    url.search = ''; // Empty out the query string
+    
+    window.history.replaceState(null, '', url.toString());
+  };
+  
   useEffect(() => {
+    clearAllParamsNative()
     fetch('/backend/users', {
       method: 'GET',
       redirect: 'manual',
@@ -69,7 +77,7 @@ function App() {
         <h1 className="appname">App-A</h1>\
       </div>
       <div className="pagebody">
-        {unauthorizedMsg != "" ? <div className='unauthorizedMsg'>{unauthorizedMsg}</div> : <></>}
+        {unauthorizedMsg != null ? <div className='unauthorizedMsg'>{unauthorizedMsg}</div> : <></>}
         {pagecontent}
       </div>
     </div>

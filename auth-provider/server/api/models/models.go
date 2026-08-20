@@ -83,7 +83,7 @@ type Application struct {
 	ID                    datatypes.BinUUID `json:"id" gorm:"default:UUID_TO_BIN(UUID())"`
 	Name                  string            `json:"name"`
 	ClientId              string            `json:"client_id"`
-	ClientSecretHash      string            `json:"client_secret_hash"`
+	ClientSecretHash      string            `json:"-"`
 	Status                string            `json:"status"`
 	LaunchUrl             string            `json:"launch_url"`
 	LogoutNotificationUrl string            `json:"logout_notification_url"`

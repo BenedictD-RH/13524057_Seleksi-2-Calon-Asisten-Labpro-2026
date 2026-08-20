@@ -179,3 +179,61 @@ func RedirectToLoginPage(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s/login?client_id=%s&redirect_uri=%s&state=%s&code_challenge=%s",
 		auth_portal_uri, client_id, redirect_uri, state, code_challenge))
 }
+
+func ReturnToClientPage(c *gin.Context, db *gorm.DB) {
+	client_id := c.Query("client_id")
+	if client_id == ""  {
+		UnauthorizedResponse(c, "No Client Queried")
+		return
+	}
+
+	var app models.Application
+	db.Model(&models.Application{}).Where("client_id = ?", client_id).First(&app)
+
+	c.JSON(http.StatusOK, gin.H{
+		"client_url" : app.LaunchUrl,
+	})
+}
+
+func AuthorizeAdminRequest(c *gin.Context, db *gorm.DB) {
+	session_token, err := c.Cookie("ssid")
+	if err != nil {
+		UnauthorizedResponse(c, "Invalid session")
+		return
+	}
+	var sessions []models.SSOSession
+	db.Where("status = ? AND session_token_hash = ?", "Active", utility.HashToken(session_token)).Find(&sessions)
+	if len(sessions) != 1 {
+		UnauthorizedResponse(c, "Invalid session")
+		return
+	}
+	sessions[0].UpdateStatus(db)
+	if (!sessions[0].IsValid()) {
+		UnauthorizedResponse(c, "Invalid session")
+		return
+	}
+	session := &sessions[0]
+
+	var user models.User
+	db.Model(&models.User{}).Where("id = ?", session.UserId).First(&user)
+
+	var adminGroup models.Group
+	db.Model(&models.Group{}).Where("name = ?", "administrators").First(&adminGroup)
+
+	var userGroup []models.UserGroup
+	db.Model(&models.UserGroup{}).Where("user_id = ? AND group_id = ?", user.ID, adminGroup.ID).First(&userGroup)
+
+	if len(userGroup) == 0 {
+		UnauthorizedResponse(c, "User is unauthorized")
+		return
+	}
+
+	if !user.IsActive() {
+		UnauthorizedResponse(c, "User is inactive")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status" : "authorized",
+	})
+}

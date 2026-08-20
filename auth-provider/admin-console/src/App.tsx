@@ -6,37 +6,65 @@ import './App.css'
 function App() {
   const [pathData, setPathData] = useState<any[]>([])
   const [remountKey, setRemountKey] = useState(0)
+  const [authorized, setAuthorized] = useState(false)
+  const [unauthorizedMsg, setUnauthorizedMsg] = useState("")
   const remountData = () => {
     setRemountKey(remountKey + 1)
   }
   const path = window.location.pathname
   useEffect(() => {
-    if (path != "") {
-      fetch('/server' + path)
-      .then((res) => {
-        if (res.ok) {
-          return res.json();
-        } else {
-          throw new Error('Network response was not ok');
+    fetch('/server/authorize/administrator', {
+      headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+      },
+      credentials: 'include',
+    }).then(response => {
+      return response.json()
+    }).then(data => {
+      if (data['status'] == "authorized") {
+        if (path != "/") {
+          fetch('/server' + path)
+          .then((res) => {
+            if (res.ok) {
+              return res.json();
+            } else {
+              throw new Error('Network response was not ok');
+            }
+            return null
+          }).then((data) => {
+            console.log(data)
+            setPathData(data)
+            setAuthorized(true)
+          }).catch((err) => {
+            console.log(err)
+          })
         }
-        return null
-      }).then((data) => {
-        console.log(data)
-        setPathData(data)
-      }).catch((err) => {
-        console.log(err)
-      })
-    }
+      } else {
+        setUnauthorizedMsg(data['error']['message'])
+      }
+    }).catch(error => console.log(error)) 
+
+    
+
   }, [remountKey])
 
   return (
     <>
-      <div className='pageheader'>
-        <NavBar></NavBar>
+      {authorized ? 
+      <div>
+        <div className='pageheader'>
+          <NavBar></NavBar>
+        </div>
+        <div className='pagebody'>
+          {<ControlPanel pageData={pathData} remount={remountData}></ControlPanel>}
+        </div>
+      </div> :
+      <div>
+        <div className='unauthorizedTitle'>Unauthorized</div>
+        <div className='unauthorizedMsg'>{unauthorizedMsg}</div>
       </div>
-      <div className='pagebody'>
-        {<ControlPanel pageData={pathData} remount={remountData}></ControlPanel>}
-      </div>
+      }
     </>
   )
 }

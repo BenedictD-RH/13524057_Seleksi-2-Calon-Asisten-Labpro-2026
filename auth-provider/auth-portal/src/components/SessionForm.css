@@ -48,10 +48,23 @@
     align-items: center;
 }
 
+.allowCont {
+    display: flex;
+    flex-direction: row;
+    margin-left: auto;
+    align-items: center;
+    gap:3%;
+}
+
+.allowText {
+    font-size: 1.2vw;
+    color: white;
+    font-family: 'Momo Trust Display';
+}
+
 .useBtn {
     height: 3.5vw;
     width: 3.5vw;
-    margin-left: auto;
     border-radius: 50%;
     background-color: darkslategray;
     font-size: 2vw;

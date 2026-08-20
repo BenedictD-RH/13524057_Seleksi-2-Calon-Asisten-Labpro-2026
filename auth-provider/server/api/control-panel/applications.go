@@ -238,7 +238,9 @@ func GetApplicationFields(c *gin.Context) {
 	t:= reflect.TypeOf(user)
 	var fieldNames []string
 	for i := 0; i < t.NumField(); i++ {
-		fieldNames = append(fieldNames, t.Field(i).Name)
+		if (t.Field(i).Name != "ClientSecretHash") {
+			fieldNames = append(fieldNames, t.Field(i).Name)
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
