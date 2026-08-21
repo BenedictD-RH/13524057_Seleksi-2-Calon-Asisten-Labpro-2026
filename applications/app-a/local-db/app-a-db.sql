@@ -39,3 +39,12 @@ CREATE TABLE processed_events(
     processed_at DATETIME NOT NULL,
     result VARCHAR(20) NOT NULL
 );
+
+CREATE TABLE activity_logs (
+    id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
+    event_type VARCHAR(50) NOT NULL,
+    external_user_id BINARY(16),
+    central_session_id BINARY(16),
+    result VARCHAR(20) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
+);

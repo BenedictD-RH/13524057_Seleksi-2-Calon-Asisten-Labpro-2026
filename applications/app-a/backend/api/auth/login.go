@@ -67,6 +67,7 @@ func LoginRequest(c *gin.Context, db *gorm.DB) {
 		InternalServerErrorResponse(c)
 		return
 	}
+	models.LogActivity("redirect_to_auth_provider", "sucess", nil, nil, db)
 	c.Redirect(http.StatusFound, fmt.Sprintf("%s/authorize?redirect_uri=%s&client_id=%s&state=%s&code_challenge=%s",
 		auth_server_url, redirect_uri, client_id, codeVerifierModel.State, code_challenge))
 }

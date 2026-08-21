@@ -29,12 +29,18 @@ func LogoutRequest(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
+	var localSession models.LocalSession
+	db.Model(&models.LocalSession{}).
+	   Where("session_token_hash = ?", utility.HashToken(local_session_token)).
+	   First(&localSession)
+
 	db.Model(&models.LocalSession{}).
 	   Where("session_token_hash = ?", utility.HashToken(local_session_token)).
 	   Updates(models.LocalSession{Status: "Revoked", RevokedReason: "user_logout"})
 
 	c.SetCookie("local_ssid", "", -1, "/", "", false, true)
 
+	models.LogActivity("user_logout", "sucess", &localSession.ExternalUserId, &localSession.CentralSessionId, db)
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Logout successful",
@@ -66,9 +72,9 @@ func BackChannelLogoutRequest(c *gin.Context, db *gorm.DB) {
 			Where("external_user_id = ? AND central_session_id = ?", eventPayload.UserId, eventPayload.CentralSessionId).
 			Updates(models.LocalSession{Status: "Revoked", RevokedReason: eventPayload.Reason}).Error
 	
-	result := "Success"
+	result := "success"
 	if err != nil {
-		result = "Failed"
+		result = "failed"
 	}
 
 	if len(processed_events) < 1 {
@@ -87,8 +93,10 @@ func BackChannelLogoutRequest(c *gin.Context, db *gorm.DB) {
 		})
 	}
 
+	models.LogActivity("backchannel_logout", result, &eventPayload.UserId, eventPayload.CentralSessionId, db)
+
 	c.JSON(http.StatusOK, gin.H{
-		"status":  "success",
-		"message": "Logout successful",
+		"status":  result,
+		"message": "Logout " + result,
 	})
 }

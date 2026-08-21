@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import LogPopup from './components/LogPopup'
 
 interface UserData {
   name: string
@@ -8,6 +9,10 @@ interface UserData {
 function App() {
   const [userData, setUserData] = useState<UserData | null>(null)
   const [unauthorizedMsg, setUnauthorizedMsg] = useState((new URLSearchParams(window.location.search)).get("errorMsg"))
+  const [localSSID, setlocalSSID] = useState((new URLSearchParams(window.location.search)).get("local_ssid"))
+  const [logPopupActive, setLogPopupActive] = useState(false)
+
+
   const handleLogin = () => {
     fetch('/backend/login', {
       redirect: 'manual',
@@ -64,25 +69,65 @@ function App() {
   };
 
   useEffect(() => {
-    clearAllParamsNative()
-    fetch('/backend/users', {
-      method: 'GET',
-      redirect: 'manual',
-      credentials: 'include'
-    }).then((res) => {
-      if (res.ok) {
-        return res.json();
-      } else if (res.status == 204) {
+    if (localSSID != null) {
+      fetch('/backend/session?' + new URLSearchParams(window.location.search), {
+        method: 'GET',
+        redirect: 'manual',
+        credentials: 'include'
+      }).then((res) => {
+        if (res.ok) {
+          return res.json();
+        } else if (res.status == 204) {
+          return null
+        } else {
+          throw new Error('Network response was not ok');
+        }
         return null
-      } else {
-        throw new Error('Network response was not ok');
-      }
-      return null
-    }).then((data) => {
-      setUserData(data);
-    }).catch((err) => {
-      setUserData(null);
-    })
+      }).then((data) => {
+        clearAllParamsNative()
+        fetch('/backend/users', {
+          method: 'GET',
+          redirect: 'manual',
+          credentials: 'include'
+        }).then((res) => {
+          if (res.ok) {
+            return res.json();
+          } else if (res.status == 204) {
+            return null
+          } else {
+            throw new Error('Network response was not ok');
+          }
+          return null
+        }).then((data) => {
+          setUserData(data);
+        }).catch((err) => {
+          setUserData(null);
+        })
+      }).catch((err) => {
+        clearAllParamsNative()
+      })
+    } 
+    else {
+      clearAllParamsNative()
+      fetch('/backend/users', {
+        method: 'GET',
+        redirect: 'manual',
+        credentials: 'include'
+      }).then((res) => {
+        if (res.ok) {
+          return res.json();
+        } else if (res.status == 204) {
+          return null
+        } else {
+          throw new Error('Network response was not ok');
+        }
+        return null
+      }).then((data) => {
+        setUserData(data);
+      }).catch((err) => {
+        setUserData(null);
+      })
+    }
   }, [])
   
 
@@ -93,10 +138,12 @@ function App() {
         <h1 className="appname">App-A</h1>
         {userData !== null ? <button className='logoutBtn' onClick={handleLogout}>Logout</button>: <></>}
       </div>
+      {logPopupActive ? <LogPopup></LogPopup> : <></>}
       <div className="pagebody">
         {unauthorizedMsg != null ? <div className='unauthorizedMsg'>{unauthorizedMsg}</div> : <></>}
         {pagecontent}
       </div>
+      <button onClick={() => setLogPopupActive(!logPopupActive)} className='logButton'>{logPopupActive ? 'Close Logs' : 'See Logs'}</button>
     </div>
   )
 }

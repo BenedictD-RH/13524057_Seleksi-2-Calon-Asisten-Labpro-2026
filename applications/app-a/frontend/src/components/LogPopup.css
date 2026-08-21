@@ -1,0 +1,38 @@
+.logPopup {
+    display: flex;
+    flex-direction: column;
+    width: 60%;
+    height: 60%;
+    overflow-y: auto;
+    position: absolute;
+    background-color: dimgray;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 3px 3px 10px darkslategray;
+}
+
+.logNav {
+    display: flex;
+    flex-direction: row;
+}
+
+.logNav > * {
+    flex-grow: 1;
+    font-size: xx-large;
+    font-family: Dosis;
+    color: white;
+    background-color: darkslategrey;
+}
+
+.logNav > *:hover {
+    filter: brightness(0.95);
+}
+
+.logEntry {
+    font-family: Dosis;
+    color: white;
+    font-size: x-large;
+    margin-left: 2%;
+    margin-bottom: 1%;
+}

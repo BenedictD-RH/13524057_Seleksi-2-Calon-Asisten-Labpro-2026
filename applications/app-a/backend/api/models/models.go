@@ -1,7 +1,12 @@
 package models
 
 import (
+	"fmt"
+	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -68,4 +73,84 @@ type ProcessedEvent struct {
 	EventType string
 	ProcessedAt time.Time
 	Result string
+}
+
+func (a ProcessedEvent) ToString() string {
+	return fmt.Sprintf("[%s][%s] at %s", 
+		a.EventType, 
+		a.Result,
+		a.ProcessedAt)
+}
+
+type ActivityLog struct {
+	ID datatypes.BinUUID
+	EventType string
+	ExternalUserId *datatypes.BinUUID
+	CentralSessionId *datatypes.BinUUID
+	Result string
+	CreatedAt time.Time
+}
+
+func LogActivity(eventType, result string, external_user_id, central_session_id *datatypes.BinUUID, db *gorm.DB) {
+	newUUID, _ := uuid.NewRandom()
+
+
+	activity_log := ActivityLog{
+		ID: datatypes.BinUUID(newUUID),
+		EventType: eventType,
+		ExternalUserId: external_user_id,
+		CentralSessionId: central_session_id,
+		Result: result,
+		CreatedAt: time.Now(),
+	}
+
+	db.Create(&activity_log)
+}
+
+func (a ActivityLog) ToString() string {
+	var userString, sessionString string
+	if a.ExternalUserId != nil {
+		userString = "User: " + a.ExternalUserId.String()
+		if a.CentralSessionId != nil {
+			userString +=", "
+		}
+	}
+	if a.CentralSessionId != nil {
+		sessionString = "Session: " + a.CentralSessionId.String()
+	}
+
+	return fmt.Sprintf("[%s][%s] by (%s%s) at %s", 
+		a.EventType, 
+		a.Result,
+		userString,
+		sessionString,
+		a.CreatedAt)
+}
+
+func GetAllActivityLogs(c *gin.Context, db *gorm.DB) {
+	var logs []ActivityLog
+	db.Model(&ActivityLog{}).Order("created_at DESC").Find(&logs)
+
+	var stringifiedLogs []string
+	for i := 0; i < len(logs);i++ {
+		stringifiedLogs = append(stringifiedLogs, logs[i].ToString())
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"log" : stringifiedLogs,
+	})
+}
+
+func GetAllProcessedEventLogs(c *gin.Context, db *gorm.DB) {
+	var logs []ProcessedEvent
+	db.Model(&ProcessedEvent{}).Order("processed_at DESC").Find(&logs)
+
+	var stringifiedLogs []string
+	for i := 0; i < len(logs);i++ {
+		stringifiedLogs = append(stringifiedLogs, logs[i].ToString())
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"log" : stringifiedLogs,
+	})
 }

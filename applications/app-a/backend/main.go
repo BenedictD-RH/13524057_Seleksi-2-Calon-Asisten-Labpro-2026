@@ -3,6 +3,7 @@ package main
 import (
 	"app-a-backend/api/app"
 	"app-a-backend/api/auth"
+	"app-a-backend/api/models"
 	"fmt"
 	"os"
 
@@ -59,12 +60,24 @@ func main() {
     app.GetUserDataRequest(c, db)
   })
 
+  r.GET("/session", func(c *gin.Context) {
+    auth.GetLocalSessionRequest(c, db)
+  })
+
   r.POST("/logout", func(c *gin.Context) {
     auth.LogoutRequest(c, db)
   })
 
   r.POST("/internal/logout", func(c *gin.Context) {
     auth.BackChannelLogoutRequest(c, db)
+  })
+
+  r.GET("/logs/activity", func(c *gin.Context) {
+    models.GetAllActivityLogs(c, db)
+  })
+
+  r.GET("/logs/event", func(c *gin.Context) {
+    models.GetAllProcessedEventLogs(c, db)
   })
 
   r.RunTLS(":8691", "./certs/localhost.pem", "./certs/localhost-key.pem")
