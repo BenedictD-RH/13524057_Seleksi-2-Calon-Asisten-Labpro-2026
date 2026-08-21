@@ -4,6 +4,7 @@ import (
 	"app-a-backend/api/models"
 	"app-a-backend/api/utility"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -14,7 +15,7 @@ func NoContentResponse(c *gin.Context) {
 }
 
 func GetUserDataRequest(c *gin.Context, db *gorm.DB) {
-	local_session_token, err := c.Cookie("local_ssid")
+	local_session_token, err := c.Cookie(os.Getenv("CLIENT_ID") + "_local_ssid")
 	if err != nil {
 		NoContentResponse(c)
 		return

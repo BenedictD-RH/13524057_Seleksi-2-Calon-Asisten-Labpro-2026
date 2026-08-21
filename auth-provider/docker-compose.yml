@@ -13,7 +13,7 @@ services:
       - auth-provider-db_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${AUTH_PROVIDER_DB_PASS}"]
-      interval: 5s
+      interval: 10s
       timeout: 60s
       retries: 20
 
@@ -31,7 +31,7 @@ services:
       - message-queue_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MESSAGE_QUEUE_DB_PASS}"]
-      interval: 5s
+      interval: 10s
       timeout: 60s
       retries: 20
 

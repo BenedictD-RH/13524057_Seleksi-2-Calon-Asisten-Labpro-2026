@@ -13,7 +13,7 @@ services:
       - app-b-local-db_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${APP_B_DB_PASS}"]
-      interval: 5s
+      interval: 10s
       timeout: 60s
       retries: 20
 
