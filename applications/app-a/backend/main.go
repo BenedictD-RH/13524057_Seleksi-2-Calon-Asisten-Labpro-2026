@@ -52,10 +52,6 @@ func main() {
     auth.AuthCallbackRequest(c, db)
   })
 
-  r.POST("/auth/register", func(c *gin.Context) {
-    auth.RegisterAppToAuthProviderRequest(c, db)
-  })
-
   r.GET("/users", func(c *gin.Context) {
     app.GetUserDataRequest(c, db)
   })

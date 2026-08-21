@@ -45,13 +45,7 @@ type CodeVerifier struct {
 	ID           datatypes.BinUUID `gorm:"default:UUID_TO_BIN(UUID())"`
 	State        string
 	CodeVerifier string
-	Status       string
 	CreatedAt    time.Time
-	ExpiresAt    time.Time
-}
-
-func (code CodeVerifier) IsValid() bool {
-	return code.ExpiresAt.After(time.Now())
 }
 
 type ProfileCache struct {

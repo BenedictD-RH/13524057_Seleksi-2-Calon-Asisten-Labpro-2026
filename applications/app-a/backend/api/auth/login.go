@@ -34,9 +34,7 @@ func CreateCodeVerifier() (models.CodeVerifier, error) {
 		ID:           datatypes.BinUUID(newUUID),
 		State:        state,
 		CodeVerifier: code_verifier,
-		Status:       "Active",
 		CreatedAt:    time.Now(),
-		ExpiresAt:    time.Now().Add(code_verifier_exp_duration),
 	}, nil
 }
 
