@@ -125,10 +125,10 @@ func UpdateAppGroupPolicyRequest(c *gin.Context, db, mq *gorm.DB) {
 	if appGroupPayload.Effect == "Blocked" {
 		OnPolicyUpdateToBlocked(appGroupPayload.AppId, appGroupPayload.GroupId, db, mq)
 	}
-
+	
 	db.Model(&models.ApplicationGroupPolicy{}).
 		Where("application_id = ? AND group_id = ?", appGroupPayload.AppId, appGroupPayload.GroupId).
-		Updates(models.ApplicationGroupPolicy{Effect: appGroupPayload.Effect})
+		Update("effect", appGroupPayload.Effect)
 
 	models.AuditEvent("update_policy", "success", nil, &appGroupPayload.AppId, nil, c, db)
 	c.JSON(http.StatusOK, gin.H{

@@ -43,7 +43,7 @@ function getIDField(path: string): string {
 }
 
 function getPayloadIDField(path: string): string {
-    if (path = "/apps") {
+    if (path == "/apps") {
         return "application_id"
     }
     return path.substring(1, path.length - 1) + "_id"
@@ -178,12 +178,7 @@ function DataContainer({entry, dataKey, remount, subsection_path = "", subsectio
         if (event.key != 'Enter') return
         const id = entry['id']
         const path = window.location.pathname
-        console.log((subsection_path == "" ? JSON.stringify({"id": entry['id'], [updateFieldKey(dataKey)]: inputValue}) : 
-                                           JSON.stringify({
-                                                [getIDField(path)] : subsection_uuid,
-                                                [getIDField(subsection_path)] : entry[getPayloadIDField(subsection_path)],
-                                                [updateFieldKey(dataKey)]: inputValue
-                                            })))
+        console.log(getPayloadIDField(subsection_path))
         fetch('/server' + path + subsection_path, {
             method: 'PATCH',
             headers: {
@@ -326,6 +321,7 @@ function TableHeader({remount}: TableHeaderProps) {
     const path = window.location.pathname
 
     const handleCreateData  = () => {
+        console.log(JSON.stringify(createForm))
         fetch('/server' + path, {
             method: 'POST',
             headers: {
