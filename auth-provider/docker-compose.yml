@@ -1,4 +1,4 @@
-services:  
+services:
   auth-provider-db:
     image: mysql:8.0
     container_name: auth-provider-db
@@ -11,6 +11,11 @@ services:
     volumes:
       - ./primary-db/init:/docker-entrypoint-initdb.d
       - auth-provider-db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${AUTH_PROVIDER_DB_PASS}"]
+      interval: 5s
+      timeout: 60s
+      retries: 20
 
   message-queue:
     image: mysql:8.0
@@ -24,12 +29,57 @@ services:
     volumes:
       - ./message-queue/init:/docker-entrypoint-initdb.d
       - message-queue_data:/var/lib/mysql
-  # auth-provider-server:
-  #   build: ./server
-  #   ports:
-  #     - "8080:8080"
-  #   env_file:
-  #     - ./.env
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MESSAGE_QUEUE_DB_PASS}"]
+      interval: 5s
+      timeout: 60s
+      retries: 20
+
+  auth-provider-server:
+    build: ./server
+    ports:
+      - "8080:8080"
+    environment:
+      - AUTH_PORTAL_URI=${AUTH_PORTAL_URL}
+      - ADMIN_CONSOLE_URI=${ADMIN_CONSOLE_URL}
+      - AUTH_PROVIDER_DB_ADDRESS=${AUTH_PROVIDER_DB_ADDRESS}
+      - AUTH_PROVIDER_DB_PASS=${AUTH_PROVIDER_DB_PASS}
+      - MESSAGE_QUEUE_DB_ADDRESS=${MESSAGE_QUEUE_DB_ADDRESS}
+      - MESSAGE_QUEUE_DB_PASS=${MESSAGE_QUEUE_DB_PASS}
+    depends_on:
+      auth-provider-db:
+        condition: service_healthy
+      message-queue:
+        condition: service_healthy
+
+  sync-worker:
+    build: ./sync-worker
+    ports:
+      - "8084:8084"
+    environment:
+      - AUTH_PROVIDER_DB_ADDRESS=${AUTH_PROVIDER_DB_ADDRESS}
+      - AUTH_PROVIDER_DB_PASS=${AUTH_PROVIDER_DB_PASS}
+      - MESSAGE_QUEUE_DB_ADDRESS=${MESSAGE_QUEUE_DB_ADDRESS}
+      - MESSAGE_QUEUE_DB_PASS=${MESSAGE_QUEUE_DB_PASS}
+    depends_on:
+      auth-provider-db:
+        condition: service_healthy
+      message-queue:
+        condition: service_healthy
+
+  auth-portal:
+    build: ./auth-portal
+    ports:
+      - "8081:8081"
+    depends_on:
+      - auth-provider-server
+
+  admin-console:
+    build: ./admin-console
+    ports:
+      - "8082:8082"
+    depends_on:
+      - auth-provider-server
 
 volumes:
   auth-provider-db_data:

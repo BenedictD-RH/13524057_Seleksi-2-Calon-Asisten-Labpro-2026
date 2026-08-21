@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -17,15 +16,9 @@ import (
 
 
 func main() {
-  // Remove for docker
-  err := godotenv.Load("../.env");
-  if (err != nil) {
-    fmt.Println("Missing .env file: " + err.Error())
-    return
-  }
-  // Remove for docker
+  db_addr := os.Getenv("APP_B_DB_ADDRESS")
   db_pass := os.Getenv("APP_B_DB_PASS")
-  dsn := fmt.Sprintf("root:%s@tcp(localhost:8790)/app-db?charset=utf8mb4&parseTime=True&loc=Local", db_pass)
+  dsn := fmt.Sprintf("root:%s@tcp(%s)/app-db?charset=utf8mb4&parseTime=True&loc=Local", db_pass, db_addr)
   db, db_err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
   if (db_err != nil) {
     fmt.Println(db_err);
@@ -80,5 +73,5 @@ func main() {
     models.GetAllProcessedEventLogs(c, db)
   })
 
-  r.RunTLS(":8791", "./certs/localhost.pem", "./certs/localhost-key.pem")
+  r.Run(":8791")
 }

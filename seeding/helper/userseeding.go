@@ -1,4 +1,4 @@
-package seeding
+package helper
 
 import (
 	"time"
@@ -72,14 +72,14 @@ func SeedUsersData(db *gorm.DB) {
 	for i := 0; i < len(SeedUsers); i++ {
 		newUUID, _ := uuid.NewRandom()
 
-		hashedPass, _ := HashPassword(SeedUsers[0].Password)
+		hashedPass, _ := HashPassword(SeedUsers[i].Password)
 
 		user := User{
 			ID:           datatypes.BinUUID(newUUID),
-			Name:         SeedUsers[0].Name,
-			Email:        SeedUsers[0].Email,
+			Name:         SeedUsers[i].Name,
+			Email:        SeedUsers[i].Email,
 			PasswordHash: hashedPass,
-			Status:       SeedUsers[0].Status,
+			Status:       SeedUsers[i].Status,
 		}
 
 		db.Create(&user)

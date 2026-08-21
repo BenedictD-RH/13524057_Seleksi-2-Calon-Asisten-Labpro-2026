@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/joho/godotenv v1.5.1
 	golang.org/x/crypto v0.23.0
 	gorm.io/datatypes v1.2.7
 	gorm.io/driver/mysql v1.6.0

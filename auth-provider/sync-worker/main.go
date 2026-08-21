@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/joho/godotenv"
 	"gorm.io/datatypes"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -159,15 +158,9 @@ func EventProcessor(ctx context.Context, db, mq *gorm.DB) {
 }
 
 func main() {
-	// Remove for docker
-	err := godotenv.Load("../.env")
-	if err != nil {
-		fmt.Println("Missing .env file: " + err.Error())
-		return
-	}
-	// Remove for docker
+	db_address := os.Getenv("AUTH_PROVIDER_DB_ADDRESS")
 	db_pass := os.Getenv("AUTH_PROVIDER_DB_PASS")
-	dsn := fmt.Sprintf("root:%s@tcp(localhost:5342)/auth-provider-db?charset=utf8mb4&parseTime=True&loc=Local", db_pass)
+	dsn := fmt.Sprintf("root:%s@tcp(%s)/auth-provider-db?charset=utf8mb4&parseTime=True&loc=Local", db_pass, db_address)
 	db, db_err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if db_err != nil {
 		fmt.Println(db_err)
@@ -177,8 +170,9 @@ func main() {
 		return
 	}
 
+	mq_address := os.Getenv("MESSAGE_QUEUE_DB_ADDRESS")
 	mq_pass := os.Getenv("MESSAGE_QUEUE_DB_PASS")
-	dsn_mq := fmt.Sprintf("root:%s@tcp(localhost:5343)/queue?charset=utf8mb4&parseTime=True&loc=Local", mq_pass)
+	dsn_mq := fmt.Sprintf("root:%s@tcp(%s)/queue?charset=utf8mb4&parseTime=True&loc=Local", mq_pass, mq_address)
 	mq, db_err := gorm.Open(mysql.Open(dsn_mq), &gorm.Config{})
 	if db_err != nil {
 		fmt.Println(db_err)

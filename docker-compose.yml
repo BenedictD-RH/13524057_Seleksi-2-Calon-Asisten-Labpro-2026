@@ -2,3 +2,4 @@ include:
   - ./auth-provider/docker-compose.yml
   - ./applications/app-a/docker-compose.yml
   - ./applications/app-b/docker-compose.yml
+  - env_file : ./.env

@@ -1,4 +1,4 @@
-package seeding
+package helper
 
 import (
 	"os"
@@ -40,14 +40,14 @@ func SeedApplicationsData(db *gorm.DB) {
 		ClientSecretHash: client_a_secret_hash,
 		Status: "Active",
 		LaunchUrl: os.Getenv("APP_A_FRONTEND"),
-		LogoutNotificationUrl: os.Getenv("APP_A_BACKEND") + "/internal/logout",
+		LogoutNotificationUrl: os.Getenv("APP_A_BACKEND_2") + "/internal/logout",
 	}
 
 	newUUID, _ = uuid.NewRandom()
 	app_a_redirect_uri := ApplicationRedirectURI{
 		ID: datatypes.BinUUID(newUUID),
 		ApplicationId: app_a.ID,
-		RedirectUri: os.Getenv("APP_A_BACKEND"),
+		RedirectUri: os.Getenv("APP_A_BACKEND") + "/auth/callback",
 	}
 
 	db.Create(&app_a)
@@ -64,14 +64,14 @@ func SeedApplicationsData(db *gorm.DB) {
 		ClientSecretHash: client_b_secret_hash,
 		Status: "Active",
 		LaunchUrl: os.Getenv("APP_B_FRONTEND"),
-		LogoutNotificationUrl: os.Getenv("APP_B_BACKEND") + "/internal/logout",
+		LogoutNotificationUrl: os.Getenv("APP_B_BACKEND_2") + "/internal/logout",
 	}
 
 	newUUID, _ = uuid.NewRandom()
 	app_b_redirect_uri := ApplicationRedirectURI{
 		ID: datatypes.BinUUID(newUUID),
 		ApplicationId: app_b.ID,
-		RedirectUri: os.Getenv("APP_B_BACKEND"),
+		RedirectUri: os.Getenv("APP_B_BACKEND") + "/auth/callback",
 	}
 
 	db.Create(&app_b)
@@ -93,26 +93,27 @@ type PolicyData struct {
 }
 
 var SeedPolicies = []PolicyData{
-	{os.Getenv("CLIENT_A_ID"), "App-A Users", "Allow"},
-	{os.Getenv("CLIENT_B_ID"), "App-B Users", "Allow"},
-	{os.Getenv("CLIENT_A_ID"), "Administrators", "Allow"},
-	{os.Getenv("CLIENT_B_ID"), "Administrators", "Allow"},
+	{"CLIENT_A_ID", "App-A Users", "Allow"},
+	{"CLIENT_B_ID", "App-B Users", "Allow"},
+	{"CLIENT_A_ID", "Administrators", "Allow"},
+	{"CLIENT_B_ID", "Administrators", "Allow"},
 }
 
 func SeedPoliciesData(db *gorm.DB) {
 	for i := 0; i < len(SeedPolicies); i++ {
 		newUUID, _ := uuid.NewRandom()
 
-		var appPKey datatypes.BinUUID
-		db.Model(&Application{}).Where("client_id = ?", SeedPolicies[0].ClientID).Pluck("id", &appPKey)
+		var appPKey Application
+		db.Model(&Application{}).Where("client_id = ?", os.Getenv(SeedPolicies[i].ClientID)).First(&appPKey)
 
-		var groupPKey datatypes.BinUUID
-		db.Model(&Group{}).Where("name = ?", SeedPolicies[0].GroupName).Pluck("id", &groupPKey)
+		var groupPKey Group
+		db.Model(&Group{}).Where("name = ?", SeedPolicies[i].GroupName).First(&groupPKey)
 
 		policy := ApplicationGroupPolicy{
 			ID: datatypes.BinUUID(newUUID),
-			ApplicationId: appPKey,
-			GroupId: groupPKey,
+			ApplicationId: appPKey.ID,
+			GroupId: groupPKey.ID,
+			Effect: SeedPolicies[i].Effect,
 		}
 
 		db.Create(&policy)

@@ -111,7 +111,7 @@ func AuthCallbackRequest(c *gin.Context, db *gorm.DB) {
 		UnauthorizedResponse(c, "Code or State not found! Please retry login!")
 		return
 	}
-	auth_server_url := os.Getenv("AUTH_SERVER_URL")
+	auth_server_url := os.Getenv("AUTH_SERVER_URL_2")
 	client_secret := os.Getenv("CLIENT_SECRET")
 	client_id := os.Getenv("CLIENT_ID")
 	if client_secret == "" || auth_server_url == "" || client_id == "" {
@@ -131,7 +131,7 @@ func AuthCallbackRequest(c *gin.Context, db *gorm.DB) {
 	payload := map[string]string{"code": code,
 		"code_verifier": codeVerifierModels[0].CodeVerifier,
 		"client_secret": client_secret,
-		"redirect_uri": "https://" + c.Request.Host + c.FullPath()}
+		"redirect_uri": "http://" + c.Request.Host + c.FullPath()}
 	jsonData, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/token", auth_server_url), bytes.NewReader(jsonData))
 
@@ -243,7 +243,7 @@ func GetLocalSessionRequest(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	c.SetCookie("local_ssid", local_session_token, int(local_session_expr.Seconds()), "/", "localhost", true, true)
+	c.SetCookie(os.Getenv("CLIENT_ID") + "_local_ssid", local_session_token, int(local_session_expr.Seconds()), "/", "localhost", true, true)
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
 		"message": "Local Session granted",

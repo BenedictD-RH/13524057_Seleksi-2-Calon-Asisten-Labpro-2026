@@ -20,4 +20,4 @@ COPY --from=builder /app-b-backend /app-b-backend
 ENV GIN_MODE=release
 EXPOSE 8791
 
-ENTRYPOINT ["/app-a-backend"]
+ENTRYPOINT ["/app-b-backend"]

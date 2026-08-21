@@ -1,10 +1,4 @@
 services:
-  # app-a-backend:
-  #   build: ./backend
-  #   ports:
-  #     - "8691:8080"
-  #   env_file:
-  #     - ./.env  
   app-a-local-db:
     image: mysql:8.0
     container_name: app-a-local-db
@@ -17,6 +11,37 @@ services:
     volumes:
       - ./local-db:/docker-entrypoint-initdb.d
       - app-a-local-db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${APP_A_DB_PASS}"]
+      interval: 5s
+      timeout: 60s
+      retries: 20
+  
+  app-a-backend:
+    build: ./backend
+    ports:
+      - "8691:8691"
+    environment:
+      - APP_A_DB_ADDRESS=${APP_A_DB_ADDRESS}
+      - APP_A_DB_PASS=${APP_A_DB_PASS}
+      - AUTH_PORTAL_URL=${AUTH_PORTAL_URL}
+      - AUTH_SERVER_URL=${AUTH_SERVER_URL}
+      - AUTH_SERVER_URL_2=${AUTH_SERVER_URL_2}
+      - FRONTEND_URI=${APP_A_FRONTEND}
+      - BACKEND_URI=${APP_A_BACKEND}
+      - REDIRECT_URI=${APP_A_BACKEND}
+      - CLIENT_SECRET=${CLIENT_A_SECRET}
+      - CLIENT_ID=${CLIENT_A_ID}
+    depends_on:
+      app-a-local-db:
+        condition: service_healthy
+
+  app-a-frontend:
+    build: ./frontend
+    ports:
+      - "8692:8692"
+    depends_on:
+      - app-a-backend
 
 
 volumes:

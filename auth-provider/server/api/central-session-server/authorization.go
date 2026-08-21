@@ -229,7 +229,7 @@ func AuthorizeAdminRequest(c *gin.Context, db *gorm.DB) {
 	db.Model(&models.User{}).Where("id = ?", session.UserId).First(&user)
 
 	var adminGroup models.Group
-	db.Model(&models.Group{}).Where("name = ?", "administrators").First(&adminGroup)
+	db.Model(&models.Group{}).Where("name = ?", "Administrators").First(&adminGroup)
 
 	var userGroup []models.UserGroup
 	db.Model(&models.UserGroup{}).Where("user_id = ? AND group_id = ?", user.ID, adminGroup.ID).First(&userGroup)

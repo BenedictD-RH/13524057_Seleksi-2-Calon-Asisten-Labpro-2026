@@ -1,4 +1,4 @@
-package seeding
+package helper
 
 import (
 	"time"
@@ -16,6 +16,9 @@ type Group struct {
 	UpdatedAt   time.Time         `json:"updated_at"`
 }
 
+func (Group) TableName() string {
+	return "groups_"
+}
 
 type GroupData struct {
 	Name string
@@ -34,8 +37,8 @@ func SeedGroupsData(db *gorm.DB) {
 
 		group := Group{
 			ID:           datatypes.BinUUID(newUUID),
-			Name:         SeedGroup[0].Name,
-			Description:        SeedGroup[0].Description,
+			Name:         SeedGroup[i].Name,
+			Description:        SeedGroup[i].Description,
 		}
 
 		db.Create(&group)
@@ -102,18 +105,18 @@ var SeedUserGroups = []UserGroupData{
 func SeedUserGroupsData (db *gorm.DB) {
 	for i:= 0; i < len(SeedUserGroups); i++ {
 		
-		var userPKey datatypes.BinUUID
-		db.Model(&User{}).Where("email = ?", SeedUserGroups[0].Email).Pluck("id", &userPKey)
+		var userPKey User
+		db.Model(&User{}).Where("email = ?", SeedUserGroups[i].Email).First(&userPKey)
 
-		var groupPKey datatypes.BinUUID
-		db.Model(&Group{}).Where("name = ?", SeedUserGroups[0].GroupName).Pluck("id", &groupPKey)
+		var groupPKey Group
+		db.Model(&Group{}).Where("name = ?", SeedUserGroups[i].GroupName).First(&groupPKey)
 
 		newUUID, _ := uuid.NewRandom()
 
 		usergroup := UserGroup{
 			ID: datatypes.BinUUID(newUUID),
-			UserId: userPKey,
-			GroupId: groupPKey,
+			UserId: userPKey.ID,
+			GroupId: groupPKey.ID,
 		}
 
 		db.Create(&usergroup)
