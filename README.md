@@ -1,6 +1,5 @@
 # 13524057_Seleksi-2-Calon-Asisten-Labpro-2026
 
-# 13524057 — Seleksi 2 Calon Asisten Labpro 2026
 
 Sistem **Single Sign-On (SSO)** custom berbasis alur *OAuth 2.0 Authorization Code + PKCE*, terdiri dari satu **Identity/Auth Provider** terpusat dan dua **Aplikasi Klien** (App-A, App-B) yang mendelegasikan autentikasi ke provider tersebut. Provider juga memiliki mekanisme *backchannel logout* asinkron (event queue + worker) sehingga logout dari satu klien akan menyebar (propagate) ke seluruh klien lain yang membagikan sesi SSO yang sama.
 
