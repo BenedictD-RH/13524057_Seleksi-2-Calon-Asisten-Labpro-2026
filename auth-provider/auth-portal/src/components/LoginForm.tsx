@@ -9,6 +9,7 @@ interface LoginError {
 interface LoginResponse {
     error?: LoginError | null;
     redirect?: string;
+    session_token?: string;
     status?: string;
 }
 
@@ -61,7 +62,7 @@ function LoginForm() {
                     })
                 }
             } else if (data.redirect) {
-                window.location.href = data.redirect
+                window.location.href = data.redirect + "?local_ssid=" + data.session_token
             } else if (data.status == "authorized") {
                 window.location.pathname = ""
             }

@@ -36,7 +36,7 @@ function SessionForm() {
             return response.json()
         }).then(data => {
             if (data['redirect'] != null) {
-                window.location.href = data['redirect']
+                window.location.href = data['redirect'] + "?local_ssid=" + data['session_token']
             } else {
                 const error = data['error']
                 if (error.code === "INVALID_GRANT") {
