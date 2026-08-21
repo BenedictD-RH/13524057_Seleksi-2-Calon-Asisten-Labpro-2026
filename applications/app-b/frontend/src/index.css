@@ -1,0 +1,92 @@
+:root {
+  background-color: pink;
+  display: block;
+}
+
+body {
+  margin: 0;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.pageheader {
+  background-color: coral;
+  padding: 0.5vw;
+  display: flex;
+  flex-direction: row;
+}
+
+.appname {
+  font-size: 3vw;
+  color:white;
+  font-family: Orbitron;
+  margin: 0 0 0 1vw;
+}
+
+.pagebody {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+
+}
+
+.loginbutton {
+  align-self: center;
+  font-size: 2vw;
+  font-weight: bold;
+  margin-top: 35vh;
+  margin-bottom: 10vh;
+  font-family: Orbitron;
+  width: 20%;
+  height: 10%;
+}
+
+.logoutBtn {
+  margin-left:auto;
+  font-size: 2vw;
+  font-weight: bold;
+  font-family: Orbitron;
+  width: 10vw;
+  padding: 0.1%;
+  height: fit-content;
+  align-self: center;
+}
+
+.contenttext {
+  font-size: 2vw;
+  font-weight: bold;
+  color: white;
+  font-family: Orbitron;
+  margin-top: 35vh;
+  margin-bottom: 10vh;
+  align-self: center;
+}
+
+.unauthorizedMsg {
+  font-size: 3vh;
+  font-family: Orbitron;
+  color: crimson;
+  background-color: white;
+  padding: 1vh 1vw 1vh 1vw;
+}
+
+.logButton {
+  align-self: flex-end;
+  width: 10vw;
+  height: 3vh;
+  font-size: larger;
+  text-align: center;
+  font-family: Orbitron;
+  margin: 1vw;
+}
+
+.appTagline {
+  color: white;
+  font-family: Orbitron;
+  align-self: flex-end;
+  margin-left: 1vw;
+}

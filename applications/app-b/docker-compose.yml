@@ -1,0 +1,23 @@
+services:
+  # app-b-backend:
+  #   build: ./backend
+  #   ports:
+  #     - "8791:8080"
+  #   env_file:
+  #     - ./.env  
+  app-b-local-db:
+    image: mysql:8.0
+    container_name: app-b-local-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: app-db
+      MYSQL_ROOT_PASSWORD: ${APP_B_DB_PASS}
+    ports:
+      - "8790:3306"
+    volumes:
+      - ./local-db:/docker-entrypoint-initdb.d
+      - app-b-local-db_data:/var/lib/mysql
+
+
+volumes:
+  app-b-local-db_data:
